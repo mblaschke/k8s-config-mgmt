@@ -15,6 +15,8 @@ import (
 
 const K8S_BLACKLIST_NAMESPACE = "^(kube-system|kube-public|default)"
 const K8S_BLACKLIST_SERVICEACCOUNT = "^(default)"
+const K8S_BLACKLIST_CLUSTERROLE = "^(admin|cluster-admin|edit|view|system:.+)$"
+const K8S_BLACKLIST_CLUSTERROLEBINDING = "^(cluster-admin|minikube-rbac|add-on-cluster-admin|kubeadm:.+|storage-.+|system:.+)$"
 
 type Kubernetes struct {
 	clientset *kubernetes.Clientset
@@ -29,8 +31,10 @@ type Kubernetes struct {
 }
 
 var (
-	k8sNamespaceBlacklist = regexp.MustCompile(K8S_BLACKLIST_NAMESPACE)
-	k8sServiceAccountDefaultBlacklist = regexp.MustCompile(K8S_BLACKLIST_SERVICEACCOUNT)
+	k8sBlacklistNamespace = regexp.MustCompile(K8S_BLACKLIST_NAMESPACE)
+	k8sBlacklistServiceAccount = regexp.MustCompile(K8S_BLACKLIST_SERVICEACCOUNT)
+	k8sBlacklistClusterRole = regexp.MustCompile(K8S_BLACKLIST_CLUSTERROLE)
+	k8sBlacklistClusterRoleBinding = regexp.MustCompile(K8S_BLACKLIST_CLUSTERROLEBINDING)
 	zeroGracePeriod int64 = 0
 )
 

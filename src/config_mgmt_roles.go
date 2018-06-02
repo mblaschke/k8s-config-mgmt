@@ -7,6 +7,12 @@ import (
 func (mgmt *K8sConfigManagement) ManageNamespaceRoles(namespace cfgNamespace) {
 	mgmt.Logger.SubCategory("Roles")
 
+	// check if anything is to do
+	if !mgmt.Configuration.Config.Roles.AutoCleanup && len(namespace.Roles) == 0 {
+		mgmt.Logger.Step("skipping")
+		return
+	}
+
 	existingList, err := mgmt.K8sService.ListRoles(namespace.Name)
 	if err != nil {
 		panic(err)
@@ -24,10 +30,17 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoles(namespace cfgNamespace) {
 			// update
 			item.Object.(*v13.Role).DeepCopyInto(&k8sObject)
 
-			mgmt.K8sService.UpdateRole(namespace.Name, &k8sObject)
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.UpdateRole(namespace.Name, &k8sObject)
+				mgmt.handleOperationState(err)
+			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
-			mgmt.K8sService.CreateRole(namespace.Name, item.Object.(*v13.Role))
+
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.CreateRole(namespace.Name, item.Object.(*v13.Role))
+				mgmt.handleOperationState(err)
+			}
 		}
 	}
 

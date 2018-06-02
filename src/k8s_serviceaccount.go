@@ -14,7 +14,7 @@ func (k *Kubernetes) ListServiceAccounts(namespace string) (list map[string]v1.S
 
 	if valList, err := k.Client().CoreV1().ServiceAccounts(namespace).List(options); err == nil {
 		for _, item := range valList.Items {
-			if !k8sServiceAccountDefaultBlacklist.MatchString(item.Name) {
+			if !k8sBlacklistServiceAccount.MatchString(item.Name) {
 				list[item.Name] = item
 			}
 		}
@@ -34,8 +34,8 @@ func (k *Kubernetes) UpdateServiceAccount(namespace string, serviceAccount *v1.S
 }
 
 func (k *Kubernetes) DeleteServiceAccount(namespace, name string) (error error) {
-	if k8sServiceAccountDefaultBlacklist.MatchString(name) {
-		return errors.New("Cannot delete blacklisted serviceaccount")
+	if k8sBlacklistServiceAccount.MatchString(name) {
+		return errors.New("Cannot delete blacklisted ServiceAccount")
 	}
 
 	options := v12.DeleteOptions{

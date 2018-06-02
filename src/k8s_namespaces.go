@@ -14,7 +14,7 @@ func (k *Kubernetes) ListNamespaces() (list map[string]*v1.Namespace, error erro
 
 	if valList, err := k.Client().CoreV1().Namespaces().List(options); err == nil {
 		for key, item := range valList.Items {
-			if !k8sNamespaceBlacklist.MatchString(item.Name) {
+			if !k8sBlacklistNamespace.MatchString(item.Name) {
 				list[item.Name] = &valList.Items[key]
 			}
 		}
@@ -26,7 +26,7 @@ func (k *Kubernetes) ListNamespaces() (list map[string]*v1.Namespace, error erro
 }
 
 func (k *Kubernetes) CreateNamespace(namespace *v1.Namespace) (ns *v1.Namespace, error error) {
-	if k8sNamespaceBlacklist.MatchString(namespace.Name) {
+	if k8sBlacklistNamespace.MatchString(namespace.Name) {
 		return nil, errors.New("Cannot create blacklisted namespace")
 	}
 
@@ -34,7 +34,7 @@ func (k *Kubernetes) CreateNamespace(namespace *v1.Namespace) (ns *v1.Namespace,
 }
 
 func (k *Kubernetes) UpdateNamespace(namespace *v1.Namespace) (ns *v1.Namespace, error error) {
-	if k8sNamespaceBlacklist.MatchString(namespace.Name) {
+	if k8sBlacklistNamespace.MatchString(namespace.Name) {
 		return nil, errors.New("Cannot update blacklisted namespace")
 	}
 
@@ -42,7 +42,7 @@ func (k *Kubernetes) UpdateNamespace(namespace *v1.Namespace) (ns *v1.Namespace,
 }
 
 func (k *Kubernetes) DeleteNamespace(name string) (error error) {
-	if k8sNamespaceBlacklist.MatchString(name) {
+	if k8sBlacklistNamespace.MatchString(name) {
 		return errors.New("Cannot delete blacklisted namespace")
 	}
 

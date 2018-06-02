@@ -22,12 +22,12 @@ func (k *Kubernetes) ListRoleBindings(namespace string) (list map[string]v13.Rol
 	return
 }
 
-func (k *Kubernetes) CreateRoleBinding(namespace string, serviceAccount *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
-	return k.Client().RbacV1().RoleBindings(namespace).Create(serviceAccount)
+func (k *Kubernetes) CreateRoleBinding(namespace string, roleBinding *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
+	return k.Client().RbacV1().RoleBindings(namespace).Create(roleBinding)
 }
 
-func (k *Kubernetes) UpdateRoleBinding(namespace string, serviceAccount *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
-	return k.Client().RbacV1().RoleBindings(namespace).Update(serviceAccount)
+func (k *Kubernetes) UpdateRoleBinding(namespace string, roleBinding *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
+	return k.Client().RbacV1().RoleBindings(namespace).Update(roleBinding)
 }
 
 func (k *Kubernetes) DeleteRoleBinding(namespace, name string) (error error) {

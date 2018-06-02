@@ -1,10 +1,27 @@
 config:
+  cluster:
+    path:
+    - cluster-config/
+
   namespaces:
-    path: config/{label=team}/*
+    path:
+    - config/{label=team}/*/
     cleanup: true
+
+  clusterroles:
+    cleanup: true
+
+  clusterrolebindings:
+    cleanup: true
+
   serviceaccounts:
     cleanup: true
+
   rolebindings:
     cleanup: true
+
   limitranges:
+    cleanup: true
+
+  configmap:
     cleanup: true

@@ -9,10 +9,10 @@ import (
 const (
 	LogPrefix         = ""
 	prefixMain        = ":: "
-	prefixCategory    = "   "
-	prefixSubCategory = "     "
-	prefixStep        = "     - "
-	prefixStepResult  = "        -> "
+	prefixCategory    = "=> "
+	prefixSubCategory = "   "
+	prefixStep        = "   - "
+	prefixStepResult  = "     -> "
 	prefixErr  = "[ERROR] "
 )
 

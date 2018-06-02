@@ -2,10 +2,16 @@ package main
 
 import (
 	v13 "k8s.io/api/rbac/v1"
-)
+	)
 
 func (mgmt *K8sConfigManagement) ManageNamespaceRoleBindings(namespace cfgNamespace) {
 	mgmt.Logger.SubCategory("RoleBindings")
+
+	// check if anything is to do
+	if !mgmt.Configuration.Config.RoleBindings.AutoCleanup && len(namespace.RoleBindings) == 0 {
+		mgmt.Logger.Step("skipping")
+		return
+	}
 
 	existingList, err := mgmt.K8sService.ListRoleBindings(namespace.Name)
 	if err != nil {
@@ -24,10 +30,17 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoleBindings(namespace cfgNamesp
 			// update
 			item.Object.(*v13.RoleBinding).DeepCopyInto(&k8sObject)
 
-			mgmt.K8sService.UpdateRoleBinding(namespace.Name, &k8sObject)
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.UpdateRoleBinding(namespace.Name, &k8sObject)
+				mgmt.handleOperationState(err)
+			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
-			mgmt.K8sService.CreateRoleBinding(namespace.Name, item.Object.(*v13.RoleBinding))
+
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.CreateRoleBinding(namespace.Name, item.Object.(*v13.RoleBinding))
+				mgmt.handleOperationState(err)
+			}
 		}
 	}
 

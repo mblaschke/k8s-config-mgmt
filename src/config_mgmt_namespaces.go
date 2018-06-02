@@ -7,6 +7,12 @@ import (
 func (mgmt *K8sConfigManagement) ManageNamespaces() {
 	mgmt.Logger.Main("Manage Namespaces")
 
+	// check if anything is to do
+	if !mgmt.Configuration.Config.Namespaces.AutoCleanup && len(mgmt.namespaces) == 0 {
+		mgmt.Logger.Step("skipping")
+		return
+	}
+
 	existingNamespaces, err := k8sService.ListNamespaces()
 	if err != nil {
 		panic(err)
@@ -21,7 +27,8 @@ func (mgmt *K8sConfigManagement) ManageNamespaces() {
 
 			if mgmt.IsNotDryRun() {
 				_, err := k8sService.UpdateNamespace(k8sObject)
-				mgmt.handleOperationState(err)			}
+				mgmt.handleOperationState(err)
+			}
 		} else {
 			mgmt.Logger.Step("Create %v [labels:%v]", item.Name, item.Labels)
 

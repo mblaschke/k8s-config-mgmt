@@ -7,6 +7,12 @@ import (
 func (mgmt *K8sConfigManagement) ManageNamespaceServiceAccounts(namespace cfgNamespace) {
 	mgmt.Logger.SubCategory("ServiceAccount")
 
+	// check if anything is to do
+	if !mgmt.Configuration.Config.ServiceAccounts.AutoCleanup && len(namespace.ServiceAccounts) == 0 {
+		mgmt.Logger.Step("skipping")
+		return
+	}
+
 	existingList, err := mgmt.K8sService.ListServiceAccounts(namespace.Name)
 	if err != nil {
 		panic(err)
@@ -19,10 +25,17 @@ func (mgmt *K8sConfigManagement) ManageNamespaceServiceAccounts(namespace cfgNam
 			// update
 			item.Object.(*v1.ServiceAccount).DeepCopyInto(&k8sObject)
 
-			mgmt.K8sService.UpdateServiceAccount(namespace.Name, &k8sObject)
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.UpdateServiceAccount(namespace.Name, &k8sObject)
+				mgmt.handleOperationState(err)
+			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
-			mgmt.K8sService.CreateServiceAccount(namespace.Name, item.Object.(*v1.ServiceAccount))
+
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.CreateServiceAccount(namespace.Name, item.Object.(*v1.ServiceAccount))
+				mgmt.handleOperationState(err)
+			}
 		}
 	}
 

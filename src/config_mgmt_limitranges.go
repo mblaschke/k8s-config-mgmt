@@ -7,6 +7,12 @@ import (
 func (mgmt *K8sConfigManagement) ManageNamespaceLimitRanges(namespace cfgNamespace) {
 	mgmt.Logger.SubCategory("LimitRanges")
 
+	// check if anything is to do
+	if !mgmt.Configuration.Config.LimitRanges.AutoCleanup && len(namespace.LimitRanges) == 0 {
+		mgmt.Logger.Step("skipping")
+		return
+	}
+
 	existingList, err := mgmt.K8sService.ListLimitRanges(namespace.Name)
 	if err != nil {
 		panic(err)
@@ -19,10 +25,17 @@ func (mgmt *K8sConfigManagement) ManageNamespaceLimitRanges(namespace cfgNamespa
 			// update
 			item.Object.(*v1.LimitRange).DeepCopyInto(&k8sObject)
 
-			mgmt.K8sService.UpdateLimitRange(namespace.Name, &k8sObject)
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.UpdateLimitRange(namespace.Name, &k8sObject)
+				mgmt.handleOperationState(err)
+			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
-			mgmt.K8sService.CreateLimitRange(namespace.Name, item.Object.(*v1.LimitRange))
+
+			if mgmt.IsNotDryRun() {
+				_, err := mgmt.K8sService.CreateLimitRange(namespace.Name, item.Object.(*v1.LimitRange))
+				mgmt.handleOperationState(err)
+			}
 		}
 	}
 
