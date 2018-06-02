@@ -9,8 +9,10 @@ import (
 const (
 	LogPrefix         = ""
 	prefixMain        = ":: "
-	prefixStep        = "   - "
-	prefixStepResult  = "      -> "
+	prefixCategory    = "   "
+	prefixSubCategory = "     "
+	prefixStep        = "     - "
+	prefixStepResult  = "        -> "
 	prefixErr  = "[ERROR] "
 )
 
@@ -46,6 +48,23 @@ func (l *DaemonLogger) Main(message string, sprintf ...interface{}) {
 	}
 
 	l.Println(prefixMain + message)
+}
+
+
+func (l *DaemonLogger) Category(message string, sprintf ...interface{}) {
+	if len(sprintf) > 0 {
+		message = fmt.Sprintf(message, sprintf...)
+	}
+
+	l.Println(prefixCategory + message)
+}
+
+func (l *DaemonLogger) SubCategory(message string, sprintf ...interface{}) {
+	if len(sprintf) > 0 {
+		message = fmt.Sprintf(message, sprintf...)
+	}
+
+	l.Println(prefixSubCategory + message)
 }
 
 func (l *DaemonLogger) Step(message string, sprintf ...interface{}) {

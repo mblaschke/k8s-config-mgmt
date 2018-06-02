@@ -1,4 +1,7 @@
 config:
   namespaces:
     path: config/{label=team}/*
-    autoCleanup: false
+    cleanup: true
+  serviceaccounts:
+    subPath: ServiceAccount
+    cleanup: true

@@ -5,28 +5,45 @@ import (
 		"regexp"
 	"path/filepath"
 	"strings"
-	)
+	"os"
+				"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/api/core/v1"
+)
 
 
 type Configuration struct {
 	Config ConfigurationConfig `yaml:"config"`
+	k8sService Kubernetes
 }
 
 type ConfigurationConfig struct {
-	Namespaces ConfigurationNamespaces `yaml:"namespaces"`
+	Namespaces ConfigurationNamespaces           `yaml:"namespaces"`
+	ServiceAccounts ConfigurationServiceAccounts `yaml:"serviceaccounts"`
 }
 
 type ConfigurationNamespaces struct {
 	Path string                  `yaml:"path"`
-	AutoCleanup bool             `yaml:"autocleanup"`
+	AutoCleanup bool             `yaml:"cleanup"`
 }
 
-type parserNamespace struct {
+type ConfigurationServiceAccounts struct {
+	SubPath string               `yaml:"subpath"`
+	AutoCleanup bool             `yaml:"cleanup"`
+}
+
+type cfgNamespace struct {
 	Name string
 	Path string
 	Labels map[string]string
+
+	ServiceAccounts map[string]cfgServiceAccount
 }
 
+type cfgServiceAccount struct {
+	Name string
+	Path string
+	Object runtime.Object
+}
 
 func ConfigurationCreateFromYaml(yamlString string) (c *Configuration, err error) {
 	err = yaml.Unmarshal([]byte(yamlString), &c)
@@ -38,14 +55,14 @@ func ConfigurationCreateFromYaml(yamlString string) (c *Configuration, err error
 }
 
 
-func (c *ConfigurationNamespaces) GetList() (namespaceList map[string]parserNamespace, err error) {
-	namespaceList = map[string]parserNamespace{}
+func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]cfgNamespace, err error) {
+	namespaceList = map[string]cfgNamespace{}
 
 	globRegexp := regexp.MustCompile("{[^}]+}")
-	glob := globRegexp.ReplaceAllString(c.Path, "*")
+	glob := globRegexp.ReplaceAllString(c.Config.Namespaces.Path, "*")
 
 
-	labelPath := "^" + regexp.QuoteMeta(c.Path)
+	labelPath := "^" + regexp.QuoteMeta(c.Config.Namespaces.Path)
 	labelPath = strings.Replace(labelPath, "\\*", "[^/]+",-1)
 	labelPath = strings.Replace(labelPath, "\\?", "[^/]",-1)
 
@@ -60,7 +77,7 @@ func (c *ConfigurationNamespaces) GetList() (namespaceList map[string]parserName
 
 	for _, fsEntry := range fsEntries {
 		if IsDirectory(fsEntry) {
-			namespace := parserNamespace{}
+			namespace := cfgNamespace{}
 			namespace.Name = filepath.Base(fsEntry)
 			namespace.Path = fsEntry
 			namespace.Labels = map[string]string{}
@@ -73,9 +90,37 @@ func (c *ConfigurationNamespaces) GetList() (namespaceList map[string]parserName
 				}
 			}
 
+			c.collectServiceAccounts(&namespace)
+
 			namespaceList[namespace.Name] = namespace
 		}
 	}
+
+	return
+}
+
+func (c *Configuration) collectServiceAccounts(namespace *cfgNamespace) () {
+	serviceAccountPath := filepath.Join(namespace.Path, c.Config.ServiceAccounts.SubPath)
+
+	fileList := recursiveFileListByPath(serviceAccountPath)
+
+	namespace.ServiceAccounts = map[string]cfgServiceAccount{}
+	for _, path := range fileList {
+		item := cfgServiceAccount{}
+		item.Path = path
+		item.Object = c.k8sService.ParseConfig(path)
+		item.Name = item.Object.(*v1.ServiceAccount).Name
+		namespace.ServiceAccounts[item.Name] = item
+	}
+}
+
+func recursiveFileListByPath(path string) (list []string) {
+	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+		if IsK8sConfigFile(path) {
+			list = append(list, path)
+		}
+		return nil
+	})
 
 	return
 }

@@ -67,6 +67,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		Configuration.k8sService = k8sService
 	} else {
 		panic("No config defined")
 	}

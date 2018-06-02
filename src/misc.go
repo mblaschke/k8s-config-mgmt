@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"runtime"
+	"path/filepath"
 )
 
 func UserHomeDir() string {
@@ -19,4 +20,24 @@ func UserHomeDir() string {
 func IsDirectory(path string) (bool) {
 	fileInfo, _ := os.Stat(path)
 	return fileInfo.IsDir()
+}
+
+func IsRegularFile(path string) (bool) {
+	fileInfo, _ := os.Stat(path)
+	return fileInfo.Mode().IsRegular()
+}
+
+func IsK8sConfigFile(path string) (bool) {
+	if !IsRegularFile(path) {
+		return false
+	}
+
+	switch(filepath.Ext(path)) {
+	case ".json":
+		return true
+	case ".yaml":
+		return true
+	}
+
+	return false
 }
