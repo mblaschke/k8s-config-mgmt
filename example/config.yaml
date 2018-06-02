@@ -1,0 +1,4 @@
+config:
+  namespaces:
+    path: config/{label=team}/*
+    autoCleanup: false
