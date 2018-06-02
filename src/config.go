@@ -2,13 +2,13 @@ package main
 
 import (
 	"gopkg.in/yaml.v2"
-		"regexp"
+	"regexp"
 	"path/filepath"
 	"strings"
-	"os"
-				"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime"
+	v13 "k8s.io/api/rbac/v1"
 	"k8s.io/api/core/v1"
-)
+	)
 
 
 type Configuration struct {
@@ -17,16 +17,19 @@ type Configuration struct {
 }
 
 type ConfigurationConfig struct {
-	Namespaces ConfigurationNamespaces           `yaml:"namespaces"`
-	ServiceAccounts ConfigurationServiceAccounts `yaml:"serviceaccounts"`
+	Namespaces ConfigurationNamespace     `yaml:"namespaces"`
+	ServiceAccounts ConfigurationSubItem  `yaml:"serviceaccounts"`
+	Roles ConfigurationSubItem            `yaml:"roles"`
+	RoleBindings ConfigurationSubItem     `yaml:"rolebindings"`
+	LimitRanges ConfigurationSubItem      `yaml:"limitranges"`
 }
 
-type ConfigurationNamespaces struct {
+type ConfigurationNamespace struct {
 	Path string                  `yaml:"path"`
 	AutoCleanup bool             `yaml:"cleanup"`
 }
 
-type ConfigurationServiceAccounts struct {
+type ConfigurationSubItem struct {
 	SubPath string               `yaml:"subpath"`
 	AutoCleanup bool             `yaml:"cleanup"`
 }
@@ -36,10 +39,13 @@ type cfgNamespace struct {
 	Path string
 	Labels map[string]string
 
-	ServiceAccounts map[string]cfgServiceAccount
+	ServiceAccounts map[string]cfgObject
+	Roles map[string]cfgObject
+	RoleBindings map[string]cfgObject
+	LimitRanges map[string]cfgObject
 }
 
-type cfgServiceAccount struct {
+type cfgObject struct {
 	Name string
 	Path string
 	Object runtime.Object
@@ -90,7 +96,7 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 				}
 			}
 
-			c.collectServiceAccounts(&namespace)
+			c.collectConfigurationObjects(&namespace)
 
 			namespaceList[namespace.Name] = namespace
 		}
@@ -99,42 +105,34 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 	return
 }
 
-func (c *Configuration) collectServiceAccounts(namespace *cfgNamespace) () {
-	serviceAccountPath := filepath.Join(namespace.Path, c.Config.ServiceAccounts.SubPath)
+func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () {
+	fileList := recursiveFileListByPath(namespace.Path)
 
-	fileList := recursiveFileListByPath(serviceAccountPath)
+	namespace.ServiceAccounts = map[string]cfgObject{}
+	namespace.Roles = map[string]cfgObject{}
+	namespace.RoleBindings = map[string]cfgObject{}
+	namespace.LimitRanges = map[string]cfgObject{}
 
-	namespace.ServiceAccounts = map[string]cfgServiceAccount{}
 	for _, path := range fileList {
-		item := cfgServiceAccount{}
+		item := cfgObject{}
 		item.Path = path
 		item.Object = c.k8sService.ParseConfig(path)
-		item.Name = item.Object.(*v1.ServiceAccount).Name
-		namespace.ServiceAccounts[item.Name] = item
-	}
-}
 
-func recursiveFileListByPath(path string) (list []string) {
-	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-		if IsK8sConfigFile(path) {
-			list = append(list, path)
-		}
-		return nil
-	})
-
-	return
-}
-
-func ensureAbsConfigPath(path string) (absPath string) {
-	var err error
-	absPath = path
-
-	if !filepath.IsAbs(absPath) {
-		absPath, err = filepath.Abs(filepath.Join(filepath.Dir(opts.Config), absPath))
-		if err != nil {
-			panic(err.Error())
+		switch(item.Object.GetObjectKind().GroupVersionKind().Kind) {
+		case "ServiceAccount":
+			item.Name = item.Object.(*v1.ServiceAccount).Name
+			namespace.ServiceAccounts[item.Name] = item
+		case "Role":
+			item.Name = item.Object.(*v13.Role).Name
+			namespace.Roles[item.Name] = item
+		case "RoleBinding":
+			item.Name = item.Object.(*v13.RoleBinding).Name
+			namespace.RoleBindings[item.Name] = item
+		case "LimitRange":
+			item.Name = item.Object.(*v1.LimitRange).Name
+			namespace.LimitRanges[item.Name] = item
+		default:
+			panic("Not allowed object found: " + item.Object.GetObjectKind().GroupVersionKind().Kind)
 		}
 	}
-
-	return
 }

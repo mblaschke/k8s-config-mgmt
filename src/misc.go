@@ -41,3 +41,28 @@ func IsK8sConfigFile(path string) (bool) {
 
 	return false
 }
+
+func recursiveFileListByPath(path string) (list []string) {
+	filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
+		if IsK8sConfigFile(path) {
+			list = append(list, path)
+		}
+		return nil
+	})
+
+	return
+}
+
+func ensureAbsConfigPath(path string) (absPath string) {
+	var err error
+	absPath = path
+
+	if !filepath.IsAbs(absPath) {
+		absPath, err = filepath.Abs(filepath.Join(filepath.Dir(opts.Config), absPath))
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+
+	return
+}

@@ -3,5 +3,8 @@ config:
     path: config/{label=team}/*
     cleanup: true
   serviceaccounts:
-    subPath: ServiceAccount
+    cleanup: true
+  rolebindings:
+    cleanup: true
+  limitranges:
     cleanup: true
