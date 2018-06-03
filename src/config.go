@@ -12,6 +12,8 @@ import (
 	v14 "k8s.io/api/storage/v1"
 	"k8s.io/api/settings/v1alpha1"
 	"k8s.io/api/policy/v1beta1"
+	"os"
+	"fmt"
 )
 
 
@@ -44,6 +46,7 @@ type ConfigurationConfig struct {
 
 type ConfigurationNamespace struct {
 	Path []string                `yaml:"path"`
+	DefaultPath []string         `yaml:"defaultpath"`
 	AutoCleanup bool             `yaml:"cleanup"`
 }
 
@@ -83,6 +86,10 @@ type cfgObject struct {
 	Path string
 	Object runtime.Object
 }
+
+var (
+	globRegexp = regexp.MustCompile("{[^}]+}")
+)
 
 func ConfigurationCreateFromYaml(yamlString string) (c *Configuration, err error) {
 	err = yaml.Unmarshal([]byte(yamlString), &c)
@@ -142,8 +149,7 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 	namespaceList = map[string]cfgNamespace{}
 
 	for _, configPath := range c.Config.Namespaces.Path {
-		globRegexp := regexp.MustCompile("{[^}]+}")
-		glob := globRegexp.ReplaceAllString(configPath, "*")
+		glob := buildGlobPathFromPatternPath(configPath)
 
 		labelPath := "^" + regexp.QuoteMeta(configPath)
 		labelPath = strings.Replace(labelPath, "\\*", "[^/]+",-1)
@@ -160,20 +166,45 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 
 		for _, fsEntry := range fsEntries {
 			if IsDirectory(fsEntry) {
+
+				// check if path is a default path
+				if IsNamespaceDefaultPath(c.Config.Namespaces.DefaultPath, fsEntry) {
+					continue
+				}
+
 				namespace := cfgNamespace{}
 				namespace.Name = filepath.Base(fsEntry)
 				namespace.Path = fsEntry
+
+				// labels
 				namespace.Labels = map[string]string{}
-
 				match := labelExtractRegexp.FindStringSubmatch(fsEntry)
-
 				for i, name := range labelExtractRegexp.SubexpNames() {
 					if i != 0 && name != "" && match[i] != "" {
 						namespace.Labels[name] = match[i]
 					}
 				}
 
-				c.collectConfigurationObjects(&namespace)
+				// init
+				namespace.ConfigMaps = map[string]cfgObject{}
+				namespace.ServiceAccounts = map[string]cfgObject{}
+				namespace.Roles = map[string]cfgObject{}
+				namespace.RoleBindings = map[string]cfgObject{}
+				namespace.ResourceQuotas = map[string]cfgObject{}
+				namespace.NetworkPolicies = map[string]cfgObject{}
+				namespace.PodPresets = map[string]cfgObject{}
+				namespace.PodDisruptionBudgets = map[string]cfgObject{}
+				namespace.LimitRanges = map[string]cfgObject{}
+
+				// default
+				for _, defaultPath := range c.Config.Namespaces.DefaultPath {
+					if defaultPath := BuildDefaultPath(defaultPath, &namespace); defaultPath != "" {
+						c.collectConfigurationObjects(&namespace, defaultPath)
+					}
+				}
+
+				// namespace config
+				c.collectConfigurationObjects(&namespace, namespace.Path)
 
 				namespaceList[namespace.Name] = namespace
 			}
@@ -183,18 +214,8 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 	return
 }
 
-func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () {
-	fileList := recursiveFileListByPath(namespace.Path)
-
-	namespace.ConfigMaps = map[string]cfgObject{}
-	namespace.ServiceAccounts = map[string]cfgObject{}
-	namespace.Roles = map[string]cfgObject{}
-	namespace.RoleBindings = map[string]cfgObject{}
-	namespace.ResourceQuotas = map[string]cfgObject{}
-	namespace.NetworkPolicies = map[string]cfgObject{}
-	namespace.PodPresets = map[string]cfgObject{}
-	namespace.PodDisruptionBudgets = map[string]cfgObject{}
-	namespace.LimitRanges = map[string]cfgObject{}
+func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace, path string) () {
+	fileList := recursiveFileListByPath(path)
 
 	for _, path := range fileList {
 		item := cfgObject{}
@@ -230,4 +251,50 @@ func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () 
 			panic("Not allowed object found: " + item.Object.GetObjectKind().GroupVersionKind().Kind)
 		}
 	}
+}
+
+func buildGlobPathFromPatternPath(path string) (string) {
+	return globRegexp.ReplaceAllString(path, "*")
+}
+
+func buildRegExpPathFromPatternPath(path string) (*regexp.Regexp) {
+	regexpPath := buildGlobPathFromPatternPath(path)
+	regexpPath = "^" + regexp.QuoteMeta(regexpPath)
+	regexpPath = strings.Replace(regexpPath, "\\*", "[^/]+",-1)
+	regexpPath = strings.Replace(regexpPath, "\\?", "[^/]",-1)
+
+	return regexp.MustCompile(regexpPath)
+}
+
+
+func IsNamespaceDefaultPath(configPathList []string, path string) (bool) {
+	if len(configPathList) > 0 {
+		for _, configPath := range configPathList {
+			regexpPath := buildRegExpPathFromPatternPath(ensureAbsConfigPath(configPath))
+			if regexpPath.MatchString(path) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func BuildDefaultPath(configPath string, namespace *cfgNamespace) (string) {
+	if configPath != "" {
+		path := ensureAbsConfigPath(configPath)
+
+		// replacement markers
+		path = strings.Replace(path, "{namespace}", namespace.Name, -1)
+		for labelName, labelValue := range namespace.Labels {
+			path = strings.Replace(path, fmt.Sprintf("{label=%s}", labelName), labelValue, -1)
+		}
+
+		fmt.Println(path)
+		if stat, err := os.Stat(path); err == nil && stat.IsDir() {
+			return path
+		}
+	}
+
+	return ""
 }

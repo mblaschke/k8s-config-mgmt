@@ -6,6 +6,9 @@ config:
   namespaces:
     path:
     - config/{label=team}/*/
+    defaultpath:
+    - config/_default/
+    - config/{label=team}/_default/
     cleanup: true
 
   clusterroles:
