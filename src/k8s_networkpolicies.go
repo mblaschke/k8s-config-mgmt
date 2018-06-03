@@ -6,7 +6,11 @@ import (
 	"k8s.io/api/networking/v1"
 )
 
-func (k *Kubernetes) ListNetworkPolicies(namespace string) (list map[string]v1.NetworkPolicy, error error) {
+type KubernetesServiceNetworkPolicies struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceNetworkPolicies) List(namespace string) (list map[string]v1.NetworkPolicy, error error) {
 	list = map[string]v1.NetworkPolicy{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListNetworkPolicies(namespace string) (list map[string]v1.N
 	return
 }
 
-func (k *Kubernetes) CreateNetworkPolicy(namespace string, NetworkPolicy *v1.NetworkPolicy) (psp *v1.NetworkPolicy, error error) {
+func (k *KubernetesServiceNetworkPolicies) Create(namespace string, NetworkPolicy *v1.NetworkPolicy) (psp *v1.NetworkPolicy, error error) {
 	return k.Client().NetworkingV1().NetworkPolicies(namespace).Create(NetworkPolicy)
 }
 
-func (k *Kubernetes) UpdateNetworkPolicy(namespace string, NetworkPolicy *v1.NetworkPolicy) (psp *v1.NetworkPolicy, error error) {
+func (k *KubernetesServiceNetworkPolicies) Update(namespace string, NetworkPolicy *v1.NetworkPolicy) (psp *v1.NetworkPolicy, error error) {
 	return k.Client().NetworkingV1().NetworkPolicies(namespace).Update(NetworkPolicy)
 }
 
-func (k *Kubernetes) DeleteNetworkPolicy(namespace, name string) (error error) {
+func (k *KubernetesServiceNetworkPolicies) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

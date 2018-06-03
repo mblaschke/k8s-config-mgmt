@@ -13,7 +13,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceConfigMaps(namespace cfgNamespac
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListConfigMaps(namespace.Name)
+	existingList, err := mgmt.K8sService.ConfigMaps().List(namespace.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -27,14 +27,14 @@ func (mgmt *K8sConfigManagement) ManageNamespaceConfigMaps(namespace cfgNamespac
 
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateConfigMap(namespace.Name, &k8sObject)
+				_, err := mgmt.K8sService.ConfigMaps().Update(namespace.Name, &k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateConfigMap(namespace.Name, item.Object.(*v1.ConfigMap))
+				_, err := mgmt.K8sService.ConfigMaps().Create(namespace.Name, item.Object.(*v1.ConfigMap))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -48,7 +48,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceConfigMaps(namespace cfgNamespac
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteConfigMap(namespace.Name, k8sObject.Name)
+					err := k8sService.ConfigMaps().Delete(namespace.Name, k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

@@ -15,7 +15,7 @@ func (mgmt *K8sConfigManagement) ManageClusterRoleBindings() {
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListClusterRoleBindings()
+	existingList, err := mgmt.K8sService.ClusterRoleBindings().List()
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +28,7 @@ func (mgmt *K8sConfigManagement) ManageClusterRoleBindings() {
 			item.Object.(*v13.ClusterRoleBinding).DeepCopyInto(&k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateClusterRoleBinding(&k8sObject)
+				_, err := mgmt.K8sService.ClusterRoleBindings().Update(&k8sObject)
 				mgmt.handleOperationState(err)
 			}
 
@@ -36,7 +36,7 @@ func (mgmt *K8sConfigManagement) ManageClusterRoleBindings() {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateClusterRoleBinding(item.Object.(*v13.ClusterRoleBinding))
+				_, err := mgmt.K8sService.ClusterRoleBindings().Create(item.Object.(*v13.ClusterRoleBinding))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -50,7 +50,7 @@ func (mgmt *K8sConfigManagement) ManageClusterRoleBindings() {
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteClusterRoleBinding(k8sObject.Name)
+					err := k8sService.ClusterRoleBindings().Delete(k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

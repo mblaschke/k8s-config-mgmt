@@ -13,7 +13,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoleBindings(namespace cfgNamesp
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListRoleBindings(namespace.Name)
+	existingList, err := mgmt.K8sService.RoleBindings().List(namespace.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -31,14 +31,14 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoleBindings(namespace cfgNamesp
 			item.Object.(*v13.RoleBinding).DeepCopyInto(&k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateRoleBinding(namespace.Name, &k8sObject)
+				_, err := mgmt.K8sService.RoleBindings().Update(namespace.Name, &k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateRoleBinding(namespace.Name, item.Object.(*v13.RoleBinding))
+				_, err := mgmt.K8sService.RoleBindings().Create(namespace.Name, item.Object.(*v13.RoleBinding))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -52,7 +52,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoleBindings(namespace cfgNamesp
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteRoleBinding(namespace.Name, k8sObject.Name)
+					err := k8sService.RoleBindings().Delete(namespace.Name, k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

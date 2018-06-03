@@ -13,7 +13,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoles(namespace cfgNamespace) {
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListRoles(namespace.Name)
+	existingList, err := mgmt.K8sService.Roles().List(namespace.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -31,14 +31,14 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoles(namespace cfgNamespace) {
 			item.Object.(*v13.Role).DeepCopyInto(&k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateRole(namespace.Name, &k8sObject)
+				_, err := mgmt.K8sService.Roles().Update(namespace.Name, &k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateRole(namespace.Name, item.Object.(*v13.Role))
+				_, err := mgmt.K8sService.Roles().Create(namespace.Name, item.Object.(*v13.Role))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -52,7 +52,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceRoles(namespace cfgNamespace) {
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteRole(namespace.Name, k8sObject.Name)
+					err := k8sService.Roles().Delete(namespace.Name, k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

@@ -7,7 +7,11 @@ import (
 	v13 "k8s.io/api/rbac/v1"
 	)
 
-func (k *Kubernetes) ListClusterRoleBindings() (list map[string]v13.ClusterRoleBinding, error error) {
+type KubernetesServiceClusterRoleBindings struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceClusterRoleBindings) List() (list map[string]v13.ClusterRoleBinding, error error) {
 	list = map[string]v13.ClusterRoleBinding{}
 
 	options := v12.ListOptions{}
@@ -30,7 +34,7 @@ func (k *Kubernetes) ListClusterRoleBindings() (list map[string]v13.ClusterRoleB
 	return
 }
 
-func (k *Kubernetes) CreateClusterRoleBinding(ClusterRoleBinding *v13.ClusterRoleBinding) (ns *v13.ClusterRoleBinding, error error) {
+func (k *KubernetesServiceClusterRoleBindings) Create(ClusterRoleBinding *v13.ClusterRoleBinding) (ns *v13.ClusterRoleBinding, error error) {
 	if k8sBlacklistClusterRoleBinding.MatchString(ClusterRoleBinding.Name) {
 		return nil, errors.New("Cannot create blacklisted ClusterRoleBinding")
 	}
@@ -38,7 +42,7 @@ func (k *Kubernetes) CreateClusterRoleBinding(ClusterRoleBinding *v13.ClusterRol
 	return k.Client().RbacV1().ClusterRoleBindings().Create(ClusterRoleBinding)
 }
 
-func (k *Kubernetes) UpdateClusterRoleBinding(ClusterRoleBinding *v13.ClusterRoleBinding) (ns *v13.ClusterRoleBinding, error error) {
+func (k *KubernetesServiceClusterRoleBindings) Update(ClusterRoleBinding *v13.ClusterRoleBinding) (ns *v13.ClusterRoleBinding, error error) {
 	if k8sBlacklistClusterRoleBinding.MatchString(ClusterRoleBinding.Name) {
 		return nil, errors.New("Cannot update blacklisted ClusterRoleBinding")
 	}
@@ -46,7 +50,7 @@ func (k *Kubernetes) UpdateClusterRoleBinding(ClusterRoleBinding *v13.ClusterRol
 	return k.Client().RbacV1().ClusterRoleBindings().Update(ClusterRoleBinding)
 }
 
-func (k *Kubernetes) DeleteClusterRoleBinding(name string) (error error) {
+func (k *KubernetesServiceClusterRoleBindings) Delete(name string) (error error) {
 	if k8sBlacklistClusterRoleBinding.MatchString(name) {
 		return errors.New("Cannot delete blacklisted ClusterRoleBinding")
 	}

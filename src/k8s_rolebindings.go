@@ -6,7 +6,11 @@ import (
 	v13 "k8s.io/api/rbac/v1"
 )
 
-func (k *Kubernetes) ListRoleBindings(namespace string) (list map[string]v13.RoleBinding, error error) {
+type KubernetesServiceRoleBindings struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceRoleBindings) List(namespace string) (list map[string]v13.RoleBinding, error error) {
 	list = map[string]v13.RoleBinding{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListRoleBindings(namespace string) (list map[string]v13.Rol
 	return
 }
 
-func (k *Kubernetes) CreateRoleBinding(namespace string, roleBinding *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
+func (k *KubernetesServiceRoleBindings) Create(namespace string, roleBinding *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
 	return k.Client().RbacV1().RoleBindings(namespace).Create(roleBinding)
 }
 
-func (k *Kubernetes) UpdateRoleBinding(namespace string, roleBinding *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
+func (k *KubernetesServiceRoleBindings) Update(namespace string, roleBinding *v13.RoleBinding) (ns *v13.RoleBinding, error error) {
 	return k.Client().RbacV1().RoleBindings(namespace).Update(roleBinding)
 }
 
-func (k *Kubernetes) DeleteRoleBinding(namespace, name string) (error error) {
+func (k *KubernetesServiceRoleBindings) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

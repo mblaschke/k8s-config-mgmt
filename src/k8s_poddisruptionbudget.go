@@ -6,7 +6,11 @@ import (
 	"k8s.io/api/policy/v1beta1"
 )
 
-func (k *Kubernetes) ListPodDisruptionBudgets(namespace string) (list map[string]v1beta1.PodDisruptionBudget, error error) {
+type KubernetesServicePodDisruptionBudgets struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServicePodDisruptionBudgets) List(namespace string) (list map[string]v1beta1.PodDisruptionBudget, error error) {
 	list = map[string]v1beta1.PodDisruptionBudget{}
 
 	options := v12.ListOptions{}
@@ -21,15 +25,15 @@ func (k *Kubernetes) ListPodDisruptionBudgets(namespace string) (list map[string
 	return
 }
 
-func (k *Kubernetes) CreatePodDisruptionBudget(namespace string, PodDisruptionBudget *v1beta1.PodDisruptionBudget) (psp *v1beta1.PodDisruptionBudget, error error) {
+func (k *KubernetesServicePodDisruptionBudgets) Create(namespace string, PodDisruptionBudget *v1beta1.PodDisruptionBudget) (psp *v1beta1.PodDisruptionBudget, error error) {
 	return k.Client().PolicyV1beta1().PodDisruptionBudgets(namespace).Create(PodDisruptionBudget)
 }
 
-func (k *Kubernetes) UpdatePodDisruptionBudget(namespace string, PodDisruptionBudget *v1beta1.PodDisruptionBudget) (psp *v1beta1.PodDisruptionBudget, error error) {
+func (k *KubernetesServicePodDisruptionBudgets) Update(namespace string, PodDisruptionBudget *v1beta1.PodDisruptionBudget) (psp *v1beta1.PodDisruptionBudget, error error) {
 	return k.Client().PolicyV1beta1().PodDisruptionBudgets(namespace).Update(PodDisruptionBudget)
 }
 
-func (k *Kubernetes) DeletePodDisruptionBudget(namespace, name string) (error error) {
+func (k *KubernetesServicePodDisruptionBudgets) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

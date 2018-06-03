@@ -7,7 +7,11 @@ import (
 	"k8s.io/api/core/v1"
 	)
 
-func (k *Kubernetes) ListNamespaces() (list map[string]*v1.Namespace, error error) {
+type KubernetesServiceNamespaces struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceNamespaces) List() (list map[string]*v1.Namespace, error error) {
 	list = map[string]*v1.Namespace{}
 
 	options := v12.ListOptions{}
@@ -25,7 +29,7 @@ func (k *Kubernetes) ListNamespaces() (list map[string]*v1.Namespace, error erro
 	return
 }
 
-func (k *Kubernetes) CreateNamespace(namespace *v1.Namespace) (ns *v1.Namespace, error error) {
+func (k *KubernetesServiceNamespaces) Create(namespace *v1.Namespace) (ns *v1.Namespace, error error) {
 	if k8sBlacklistNamespace.MatchString(namespace.Name) {
 		return nil, errors.New("Cannot create blacklisted namespace")
 	}
@@ -33,7 +37,7 @@ func (k *Kubernetes) CreateNamespace(namespace *v1.Namespace) (ns *v1.Namespace,
 	return k.Client().CoreV1().Namespaces().Create(namespace)
 }
 
-func (k *Kubernetes) UpdateNamespace(namespace *v1.Namespace) (ns *v1.Namespace, error error) {
+func (k *KubernetesServiceNamespaces) Update(namespace *v1.Namespace) (ns *v1.Namespace, error error) {
 	if k8sBlacklistNamespace.MatchString(namespace.Name) {
 		return nil, errors.New("Cannot update blacklisted namespace")
 	}
@@ -41,7 +45,7 @@ func (k *Kubernetes) UpdateNamespace(namespace *v1.Namespace) (ns *v1.Namespace,
 	return k.Client().CoreV1().Namespaces().Update(namespace)
 }
 
-func (k *Kubernetes) DeleteNamespace(name string) (error error) {
+func (k *KubernetesServiceNamespaces) Delete(name string) (error error) {
 	if k8sBlacklistNamespace.MatchString(name) {
 		return errors.New("Cannot delete blacklisted namespace")
 	}

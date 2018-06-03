@@ -53,8 +53,10 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 	mgmt.Logger.Main("Manage Configuration")
 
 	mgmt.Logger.Category("Cluster configuration")
+	mgmt.ManagePodSecurityPolicies()
 	mgmt.ManageClusterRoles()
 	mgmt.ManageClusterRoleBindings()
+	mgmt.ManageStorageClasses()
 	mgmt.ManageNamespaces()
 
 	for _, namespace := range mgmt.namespaces {
@@ -65,6 +67,9 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 		mgmt.ManageNamespaceRoles(namespace)
 		mgmt.ManageNamespaceRoleBindings(namespace)
 		mgmt.ManageNamespaceResourceQuotas(namespace)
+		mgmt.ManageNamespacePodPresets(namespace)
+		mgmt.ManageNamespacePodDisruptionBudgets(namespace)
 		mgmt.ManageNamespaceLimitRanges(namespace)
+		mgmt.ManageNamespaceNetworkPolicies(namespace)
 	}
 }

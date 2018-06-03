@@ -13,7 +13,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceLimitRanges(namespace cfgNamespa
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListLimitRanges(namespace.Name)
+	existingList, err := mgmt.K8sService.LimitRanges().List(namespace.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -26,14 +26,14 @@ func (mgmt *K8sConfigManagement) ManageNamespaceLimitRanges(namespace cfgNamespa
 			item.Object.(*v1.LimitRange).DeepCopyInto(&k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateLimitRange(namespace.Name, &k8sObject)
+				_, err := mgmt.K8sService.LimitRanges().Update(namespace.Name, &k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateLimitRange(namespace.Name, item.Object.(*v1.LimitRange))
+				_, err := mgmt.K8sService.LimitRanges().Create(namespace.Name, item.Object.(*v1.LimitRange))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -47,7 +47,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceLimitRanges(namespace cfgNamespa
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteLimitRange(namespace.Name, k8sObject.Name)
+					err := k8sService.LimitRanges().Delete(namespace.Name, k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

@@ -8,7 +8,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	v13 "k8s.io/api/rbac/v1"
 	"k8s.io/api/core/v1"
-	)
+	v12 "k8s.io/api/networking/v1"
+	v14 "k8s.io/api/storage/v1"
+	"k8s.io/api/settings/v1alpha1"
+	"k8s.io/api/policy/v1beta1"
+)
 
 
 type Configuration struct {
@@ -17,20 +21,25 @@ type Configuration struct {
 }
 
 type ConfigurationConfig struct {
-	Cluster ConfigurationCluster             `yaml:"cluster"`
-	Namespaces ConfigurationNamespace        `yaml:"namespaces"`
+	Cluster ConfigurationCluster                      `yaml:"cluster"`
+	Namespaces ConfigurationNamespace                 `yaml:"namespaces"`
 
 	// cluster scope
-	ClusterRoles ConfigurationSubItem        `yaml:"clusterroles"`
-	ClusterRoleBindings ConfigurationSubItem `yaml:"clusterrolebindings""`
+	ClusterRoles ConfigurationSubItem                 `yaml:"clusterroles"`
+	ClusterRoleBindings ConfigurationSubItem          `yaml:"clusterrolebindings"`
 
 	// namespace scope
-	ConfigMaps ConfigurationSubItem          `yaml:"configmaps"`
-	ServiceAccounts ConfigurationSubItem     `yaml:"serviceaccounts"`
-	Roles ConfigurationSubItem               `yaml:"roles"`
-	RoleBindings ConfigurationSubItem        `yaml:"rolebindings"`
-	ResourceQuotas ConfigurationSubItem      `yaml:"resourcequotas"`
-	LimitRanges ConfigurationSubItem         `yaml:"limitranges"`
+	ConfigMaps ConfigurationSubItem                   `yaml:"configmaps"`
+	ServiceAccounts ConfigurationSubItem              `yaml:"serviceaccounts"`
+	Roles ConfigurationSubItem                        `yaml:"roles"`
+	RoleBindings ConfigurationSubItem                 `yaml:"rolebindings"`
+	ResourceQuotas ConfigurationSubItem               `yaml:"resourcequotas"`
+	NetworkPolicies ConfigurationSubItem              `yaml:"networkpolicies"`
+	StorageClasses ConfigurationSubItem               `yaml:"storageclasses"`
+	PodPresets ConfigurationSubItem                   `yaml:"podpresets"`
+	PodSecurityPolicies ConfigurationSubItem          `yaml:"podsecuritypolicies"`
+	PodDisruptionBudgets ConfigurationSubItem         `yaml:"poddisruptionbudgets"`
+	LimitRanges ConfigurationSubItem                  `yaml:"limitranges"`
 }
 
 type ConfigurationNamespace struct {
@@ -49,6 +58,8 @@ type ConfigurationSubItem struct {
 type cfgCluster struct {
 	ClusterRoles map[string]cfgObject
 	ClusterRoleBindings map[string]cfgObject
+	PodSecurityPolicies map[string]cfgObject
+	StorageClasses map[string]cfgObject
 }
 
 type cfgNamespace struct {
@@ -61,6 +72,9 @@ type cfgNamespace struct {
 	Roles map[string]cfgObject
 	RoleBindings map[string]cfgObject
 	ResourceQuotas map[string]cfgObject
+	NetworkPolicies map[string]cfgObject
+	PodPresets map[string]cfgObject
+	PodDisruptionBudgets map[string]cfgObject
 	LimitRanges map[string]cfgObject
 }
 
@@ -90,6 +104,8 @@ func (c *Configuration) BuildClusterConfiguration() (clusterConfig cfgCluster, e
 
 	clusterConfig.ClusterRoles = map[string]cfgObject{}
 	clusterConfig.ClusterRoleBindings = map[string]cfgObject{}
+	clusterConfig.StorageClasses = map[string]cfgObject{}
+	clusterConfig.PodSecurityPolicies = map[string]cfgObject{}
 
 	for _, configPath := range c.Config.Cluster.Path {
 		fileList := recursiveFileListByPath(configPath)
@@ -106,6 +122,12 @@ func (c *Configuration) BuildClusterConfiguration() (clusterConfig cfgCluster, e
 			case "ClusterRoleBinding":
 				item.Name = item.Object.(*v13.ClusterRoleBinding).Name
 				clusterConfig.ClusterRoleBindings[item.Name] = item
+			case "StorageClass":
+				item.Name = item.Object.(*v14.StorageClass).Name
+				clusterConfig.StorageClasses[item.Name] = item
+			case "PodSecurityPolicy":
+				item.Name = item.Object.(*v1beta1.PodSecurityPolicy).Name
+				clusterConfig.StorageClasses[item.Name] = item
 			default:
 				panic("Not allowed object found: " + item.Object.GetObjectKind().GroupVersionKind().Kind)
 			}
@@ -169,6 +191,9 @@ func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () 
 	namespace.Roles = map[string]cfgObject{}
 	namespace.RoleBindings = map[string]cfgObject{}
 	namespace.ResourceQuotas = map[string]cfgObject{}
+	namespace.NetworkPolicies = map[string]cfgObject{}
+	namespace.PodPresets = map[string]cfgObject{}
+	namespace.PodDisruptionBudgets = map[string]cfgObject{}
 	namespace.LimitRanges = map[string]cfgObject{}
 
 	for _, path := range fileList {
@@ -189,9 +214,15 @@ func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () 
 		case "RoleBinding":
 			item.Name = item.Object.(*v13.RoleBinding).Name
 			namespace.RoleBindings[item.Name] = item
+		case "NetworkPolicy":
+			item.Name = item.Object.(*v12.NetworkPolicy).Name
+			namespace.NetworkPolicies[item.Name] = item
 		case "LimitRange":
 			item.Name = item.Object.(*v1.LimitRange).Name
 			namespace.LimitRanges[item.Name] = item
+		case "PodPreset":
+			item.Name = item.Object.(*v1alpha1.PodPreset).Name
+			namespace.PodPresets[item.Name] = item
 		case "ResourceQuota":
 			item.Name = item.Object.(*v1.ResourceQuota).Name
 			namespace.ResourceQuotas[item.Name] = item

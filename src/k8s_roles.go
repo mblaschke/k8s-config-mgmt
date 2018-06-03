@@ -6,7 +6,11 @@ import (
 	v13 "k8s.io/api/rbac/v1"
 )
 
-func (k *Kubernetes) ListRoles(namespace string) (list map[string]v13.Role, error error) {
+type KubernetesServiceRoles struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceRoles) List(namespace string) (list map[string]v13.Role, error error) {
 	list = map[string]v13.Role{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListRoles(namespace string) (list map[string]v13.Role, erro
 	return
 }
 
-func (k *Kubernetes) CreateRole(namespace string, serviceAccount *v13.Role) (ns *v13.Role, error error) {
+func (k *KubernetesServiceRoles) Create(namespace string, serviceAccount *v13.Role) (ns *v13.Role, error error) {
 	return k.Client().RbacV1().Roles(namespace).Create(serviceAccount)
 }
 
-func (k *Kubernetes) UpdateRole(namespace string, serviceAccount *v13.Role) (ns *v13.Role, error error) {
+func (k *KubernetesServiceRoles) Update(namespace string, serviceAccount *v13.Role) (ns *v13.Role, error error) {
 	return k.Client().RbacV1().Roles(namespace).Update(serviceAccount)
 }
 
-func (k *Kubernetes) DeleteRole(namespace, name string) (error error) {
+func (k *KubernetesServiceRoles) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

@@ -6,7 +6,11 @@ import (
 	v13 "k8s.io/api/core/v1"
 )
 
-func (k *Kubernetes) ListPodTemplates(namespace string) (list map[string]v13.PodTemplate, error error) {
+type KubernetesServicePodTemplates struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServicePodTemplates) List(namespace string) (list map[string]v13.PodTemplate, error error) {
 	list = map[string]v13.PodTemplate{}
 
 	options := v12.ListOptions{}
@@ -21,15 +25,15 @@ func (k *Kubernetes) ListPodTemplates(namespace string) (list map[string]v13.Pod
 	return
 }
 
-func (k *Kubernetes) CreatePodTemplate(namespace string, PodTemplate *v13.PodTemplate) (psp *v13.PodTemplate, error error) {
+func (k *KubernetesServicePodTemplates) Create(namespace string, PodTemplate *v13.PodTemplate) (psp *v13.PodTemplate, error error) {
 	return k.Client().CoreV1().PodTemplates(namespace).Create(PodTemplate)
 }
 
-func (k *Kubernetes) UpdatePodTemplate(namespace string, PodTemplate *v13.PodTemplate) (psp *v13.PodTemplate, error error) {
+func (k *KubernetesServicePodTemplates) Update(namespace string, PodTemplate *v13.PodTemplate) (psp *v13.PodTemplate, error error) {
 	return k.Client().CoreV1().PodTemplates(namespace).Update(PodTemplate)
 }
 
-func (k *Kubernetes) DeletePodTemplate(namespace, name string) (error error) {
+func (k *KubernetesServicePodTemplates) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

@@ -6,7 +6,11 @@ import (
 	v1alpha1 "k8s.io/api/settings/v1alpha1"
 )
 
-func (k *Kubernetes) ListPodPresets(namespace string) (list map[string]v1alpha1.PodPreset, error error) {
+type KubernetesServicePodPresets struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServicePodPresets) List(namespace string) (list map[string]v1alpha1.PodPreset, error error) {
 	list = map[string]v1alpha1.PodPreset{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListPodPresets(namespace string) (list map[string]v1alpha1.
 	return
 }
 
-func (k *Kubernetes) CreatePodPreset(namespace string, PodPreset *v1alpha1.PodPreset) (psp *v1alpha1.PodPreset, error error) {
+func (k *KubernetesServicePodPresets) Create(namespace string, PodPreset *v1alpha1.PodPreset) (psp *v1alpha1.PodPreset, error error) {
 	return k.Client().SettingsV1alpha1().PodPresets(namespace).Create(PodPreset)
 }
 
-func (k *Kubernetes) UpdatePodPreset(namespace string, PodPreset *v1alpha1.PodPreset) (psp *v1alpha1.PodPreset, error error) {
+func (k *KubernetesServicePodPresets) Update(namespace string, PodPreset *v1alpha1.PodPreset) (psp *v1alpha1.PodPreset, error error) {
 	return k.Client().SettingsV1alpha1().PodPresets(namespace).Update(PodPreset)
 }
 
-func (k *Kubernetes) DeletePodPreset(namespace, name string) (error error) {
+func (k *KubernetesServicePodPresets) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

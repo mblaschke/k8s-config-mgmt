@@ -13,7 +13,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceResourceQuotas(namespace cfgName
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListResourceQuotas(namespace.Name)
+	existingList, err := mgmt.K8sService.ResourceQuotas().List(namespace.Name)
 	if err != nil {
 		panic(err)
 	}
@@ -26,14 +26,14 @@ func (mgmt *K8sConfigManagement) ManageNamespaceResourceQuotas(namespace cfgName
 			item.Object.(*v1.ResourceQuota).DeepCopyInto(&k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateResourceQuota(namespace.Name, &k8sObject)
+				_, err := mgmt.K8sService.ResourceQuotas().Update(namespace.Name, &k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateResourceQuota(namespace.Name, item.Object.(*v1.ResourceQuota))
+				_, err := mgmt.K8sService.ResourceQuotas().Create(namespace.Name, item.Object.(*v1.ResourceQuota))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -47,7 +47,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaceResourceQuotas(namespace cfgName
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteResourceQuota(namespace.Name, k8sObject.Name)
+					err := k8sService.ResourceQuotas().Delete(namespace.Name, k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

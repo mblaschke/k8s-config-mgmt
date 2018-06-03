@@ -6,7 +6,11 @@ import (
 	"k8s.io/api/storage/v1"
 )
 
-func (k *Kubernetes) ListStorageClasses() (list map[string]v1.StorageClass, error error) {
+type KubernetesServiceStorageClasses struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceStorageClasses) List() (list map[string]v1.StorageClass, error error) {
 	list = map[string]v1.StorageClass{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListStorageClasses() (list map[string]v1.StorageClass, erro
 	return
 }
 
-func (k *Kubernetes) CreateStorageClass(StorageClass *v1.StorageClass) (psp *v1.StorageClass, error error) {
+func (k *KubernetesServiceStorageClasses) Create(StorageClass *v1.StorageClass) (psp *v1.StorageClass, error error) {
 	return k.Client().StorageV1().StorageClasses().Create(StorageClass)
 }
 
-func (k *Kubernetes) UpdateStorageClass(StorageClass *v1.StorageClass) (psp *v1.StorageClass, error error) {
+func (k *KubernetesServiceStorageClasses) Update(StorageClass *v1.StorageClass) (psp *v1.StorageClass, error error) {
 	return k.Client().StorageV1().StorageClasses().Update(StorageClass)
 }
 
-func (k *Kubernetes) DeleteStorageClass(name string) (error error) {
+func (k *KubernetesServiceStorageClasses) Delete(name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

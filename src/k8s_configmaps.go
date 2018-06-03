@@ -6,7 +6,11 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (k *Kubernetes) ListConfigMaps(namespace string) (list map[string]v1.ConfigMap, error error) {
+type KubernetesServiceConfigMaps struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceConfigMaps) List(namespace string) (list map[string]v1.ConfigMap, error error) {
 	list = map[string]v1.ConfigMap{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListConfigMaps(namespace string) (list map[string]v1.Config
 	return
 }
 
-func (k *Kubernetes) CreateConfigMap(namespace string, configMap *v1.ConfigMap) (ns *v1.ConfigMap, error error) {
+func (k *KubernetesServiceConfigMaps) Create(namespace string, configMap *v1.ConfigMap) (ns *v1.ConfigMap, error error) {
 	return k.Client().CoreV1().ConfigMaps(namespace).Create(configMap)
 }
 
-func (k *Kubernetes) UpdateConfigMap(namespace string, configMap *v1.ConfigMap) (ns *v1.ConfigMap, error error) {
+func (k *KubernetesServiceConfigMaps) Update(namespace string, configMap *v1.ConfigMap) (ns *v1.ConfigMap, error error) {
 	return k.Client().CoreV1().ConfigMaps(namespace).Update(configMap)
 }
 
-func (k *Kubernetes) DeleteConfigMap(namespace, name string) (error error) {
+func (k *KubernetesServiceConfigMaps) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

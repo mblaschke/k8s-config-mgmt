@@ -7,7 +7,11 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (k *Kubernetes) ListServiceAccounts(namespace string) (list map[string]v1.ServiceAccount, error error) {
+type KubernetesServiceServiceAccounts struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceServiceAccounts) List(namespace string) (list map[string]v1.ServiceAccount, error error) {
 	list = map[string]v1.ServiceAccount{}
 
 	options := v12.ListOptions{}
@@ -25,15 +29,15 @@ func (k *Kubernetes) ListServiceAccounts(namespace string) (list map[string]v1.S
 	return
 }
 
-func (k *Kubernetes) CreateServiceAccount(namespace string, serviceAccount *v1.ServiceAccount) (ns *v1.ServiceAccount, error error) {
+func (k *KubernetesServiceServiceAccounts) Create(namespace string, serviceAccount *v1.ServiceAccount) (ns *v1.ServiceAccount, error error) {
 	return k.Client().CoreV1().ServiceAccounts(namespace).Create(serviceAccount)
 }
 
-func (k *Kubernetes) UpdateServiceAccount(namespace string, serviceAccount *v1.ServiceAccount) (ns *v1.ServiceAccount, error error) {
+func (k *KubernetesServiceServiceAccounts) Update(namespace string, serviceAccount *v1.ServiceAccount) (ns *v1.ServiceAccount, error error) {
 	return k.Client().CoreV1().ServiceAccounts(namespace).Update(serviceAccount)
 }
 
-func (k *Kubernetes) DeleteServiceAccount(namespace, name string) (error error) {
+func (k *KubernetesServiceServiceAccounts) Delete(namespace, name string) (error error) {
 	if k8sBlacklistServiceAccount.MatchString(name) {
 		return errors.New("Cannot delete blacklisted ServiceAccount")
 	}

@@ -7,7 +7,11 @@ import (
 	v13 "k8s.io/api/rbac/v1"
 	)
 
-func (k *Kubernetes) ListClusterRoles() (list map[string]v13.ClusterRole, error error) {
+type KubernetesServiceClusterRoles struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceClusterRoles) List() (list map[string]v13.ClusterRole, error error) {
 	list = map[string]v13.ClusterRole{}
 
 	options := v12.ListOptions{}
@@ -30,7 +34,7 @@ func (k *Kubernetes) ListClusterRoles() (list map[string]v13.ClusterRole, error 
 	return
 }
 
-func (k *Kubernetes) CreateClusterRole(clusterRole *v13.ClusterRole) (ns *v13.ClusterRole, error error) {
+func (k *KubernetesServiceClusterRoles) Create(clusterRole *v13.ClusterRole) (ns *v13.ClusterRole, error error) {
 	if k8sBlacklistClusterRole.MatchString(clusterRole.Name) {
 		return nil, errors.New("Cannot create blacklisted ClusterRole")
 	}
@@ -38,7 +42,7 @@ func (k *Kubernetes) CreateClusterRole(clusterRole *v13.ClusterRole) (ns *v13.Cl
 	return k.Client().RbacV1().ClusterRoles().Create(clusterRole)
 }
 
-func (k *Kubernetes) UpdateClusterRole(clusterRole *v13.ClusterRole) (ns *v13.ClusterRole, error error) {
+func (k *KubernetesServiceClusterRoles) Update(clusterRole *v13.ClusterRole) (ns *v13.ClusterRole, error error) {
 	if k8sBlacklistClusterRole.MatchString(clusterRole.Name) {
 		return nil, errors.New("Cannot update blacklisted ClusterRole")
 	}
@@ -46,7 +50,7 @@ func (k *Kubernetes) UpdateClusterRole(clusterRole *v13.ClusterRole) (ns *v13.Cl
 	return k.Client().RbacV1().ClusterRoles().Update(clusterRole)
 }
 
-func (k *Kubernetes) DeleteClusterRole(name string) (error error) {
+func (k *KubernetesServiceClusterRoles) Delete(name string) (error error) {
 	if k8sBlacklistClusterRole.MatchString(name) {
 		return errors.New("Cannot delete blacklisted ClusterRole")
 	}

@@ -13,7 +13,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaces() {
 		return
 	}
 
-	existingNamespaces, err := k8sService.ListNamespaces()
+	existingNamespaces, err := k8sService.Namespaces().List()
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +26,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaces() {
 			k8sObject.Labels = item.Labels
 
 			if mgmt.IsNotDryRun() {
-				_, err := k8sService.UpdateNamespace(k8sObject)
+				_, err := k8sService.Namespaces().Update(k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
@@ -38,7 +38,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaces() {
 			k8sObject.Labels = item.Labels
 
 			if mgmt.IsNotDryRun() {
-				_, err := k8sService.CreateNamespace(k8sObject)
+				_, err := k8sService.Namespaces().Create(k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -51,7 +51,7 @@ func (mgmt *K8sConfigManagement) ManageNamespaces() {
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteNamespace(k8sObject.Name)
+					err := k8sService.Namespaces().Delete(k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

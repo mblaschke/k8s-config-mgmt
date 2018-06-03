@@ -15,7 +15,7 @@ func (mgmt *K8sConfigManagement) ManageClusterRoles() {
 		return
 	}
 
-	existingList, err := mgmt.K8sService.ListClusterRoles()
+	existingList, err := mgmt.K8sService.ClusterRoles().List()
 	if err != nil {
 		panic(err)
 	}
@@ -28,14 +28,14 @@ func (mgmt *K8sConfigManagement) ManageClusterRoles() {
 			item.Object.(*v13.ClusterRole).DeepCopyInto(&k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.UpdateClusterRole(&k8sObject)
+				_, err := mgmt.K8sService.ClusterRoles().Update(&k8sObject)
 				mgmt.handleOperationState(err)
 			}
 		} else {
 			mgmt.Logger.Step("Creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.CreateClusterRole(item.Object.(*v13.ClusterRole))
+				_, err := mgmt.K8sService.ClusterRoles().Create(item.Object.(*v13.ClusterRole))
 				mgmt.handleOperationState(err)
 			}
 		}
@@ -49,7 +49,7 @@ func (mgmt *K8sConfigManagement) ManageClusterRoles() {
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
-					err := k8sService.DeleteClusterRole(k8sObject.Name)
+					err := k8sService.ClusterRoles().Delete(k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
 			}

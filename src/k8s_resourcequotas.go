@@ -6,7 +6,11 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (k *Kubernetes) ListResourceQuotas(namespace string) (list map[string]v1.ResourceQuota, error error) {
+type KubernetesServiceResourceQuotas struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceResourceQuotas) List(namespace string) (list map[string]v1.ResourceQuota, error error) {
 	list = map[string]v1.ResourceQuota{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListResourceQuotas(namespace string) (list map[string]v1.Re
 	return
 }
 
-func (k *Kubernetes) CreateResourceQuota(namespace string, ResourceQuota *v1.ResourceQuota) (ns *v1.ResourceQuota, error error) {
+func (k *KubernetesServiceResourceQuotas) Create(namespace string, ResourceQuota *v1.ResourceQuota) (ns *v1.ResourceQuota, error error) {
 	return k.Client().CoreV1().ResourceQuotas(namespace).Create(ResourceQuota)
 }
 
-func (k *Kubernetes) UpdateResourceQuota(namespace string, ResourceQuota *v1.ResourceQuota) (ns *v1.ResourceQuota, error error) {
+func (k *KubernetesServiceResourceQuotas) Update(namespace string, ResourceQuota *v1.ResourceQuota) (ns *v1.ResourceQuota, error error) {
 	return k.Client().CoreV1().ResourceQuotas(namespace).Update(ResourceQuota)
 }
 
-func (k *Kubernetes) DeleteResourceQuota(namespace, name string) (error error) {
+func (k *KubernetesServiceResourceQuotas) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}

@@ -2,16 +2,16 @@ package main
 
 import (
 	"regexp"
-		"k8s.io/client-go/rest"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-				"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/kubernetes/scheme"
 	"io/ioutil"
 	"fmt"
 	"log"
 	"k8s.io/apimachinery/pkg/runtime"
-	)
+)
 
 const K8S_BLACKLIST_NAMESPACE = "^(kube-system|kube-public|default)"
 const K8S_BLACKLIST_SERVICEACCOUNT = "^(default)"
@@ -22,16 +22,12 @@ type KubernetesBase struct {
 	clientset *kubernetes.Clientset
 
 	Logger *DaemonLogger
+	KubeContext string
+	KubeConfig string
 }
 
 type Kubernetes struct {
 	KubernetesBase
-
-	KubeContext string
-	KubeConfig string
-	AnnotationTrigger string
-	AnnotationSelector string
-	AnnotationSelectorValue string
 }
 
 
@@ -44,7 +40,7 @@ var (
 )
 
 // Create cached kubernetes client
-func (k *Kubernetes) Client() (clientset *kubernetes.Clientset) {
+func (k *KubernetesBase) Client() (clientset *kubernetes.Clientset) {
 	var err error
 	var config *rest.Config
 
@@ -94,6 +90,62 @@ func (k *Kubernetes) ParseConfig(path string) (runtime.Object) {
 	return obj
 }
 
-func (k *Kubernetes) ClusterRoleBindings() (runtime.Object) {
+func (k *Kubernetes) ClusterRoleBindings() (*KubernetesServiceClusterRoleBindings) {
+	return &KubernetesServiceClusterRoleBindings{KubernetesBase: k.KubernetesBase}
+}
 
+func (k *Kubernetes) ClusterRoles() (*KubernetesServiceClusterRoles) {
+	return &KubernetesServiceClusterRoles{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) ConfigMaps() (*KubernetesServiceConfigMaps) {
+	return &KubernetesServiceConfigMaps{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) LimitRanges() (*KubernetesServiceLimitRanges) {
+	return &KubernetesServiceLimitRanges{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) Namespaces() (*KubernetesServiceNamespaces) {
+	return &KubernetesServiceNamespaces{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) NetworkPolicies() (*KubernetesServiceNetworkPolicies) {
+	return &KubernetesServiceNetworkPolicies{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) PodDisruptionBudgets() (*KubernetesServicePodDisruptionBudgets) {
+	return &KubernetesServicePodDisruptionBudgets{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) PodPresets() (*KubernetesServicePodPresets) {
+	return &KubernetesServicePodPresets{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) PodSecurityPolicies() (*KubernetesServicePodSecurityPolicies) {
+	return &KubernetesServicePodSecurityPolicies{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) PodTemplates() (*KubernetesServicePodTemplates) {
+	return &KubernetesServicePodTemplates{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) ResourceQuotas() (*KubernetesServiceResourceQuotas) {
+	return &KubernetesServiceResourceQuotas{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) RoleBindings() (*KubernetesServiceRoleBindings) {
+	return &KubernetesServiceRoleBindings{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) Roles() (*KubernetesServiceRoles) {
+	return &KubernetesServiceRoles{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) ServiceAccounts() (*KubernetesServiceServiceAccounts) {
+	return &KubernetesServiceServiceAccounts{KubernetesBase: k.KubernetesBase}
+}
+
+func (k *Kubernetes) StorageClasses() (*KubernetesServiceStorageClasses) {
+	return &KubernetesServiceStorageClasses{KubernetesBase: k.KubernetesBase}
 }

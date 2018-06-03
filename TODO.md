@@ -3,11 +3,13 @@
 - blacklist
 - global namespace config?
 
-x podsecuritypolicies
 x PodPreset
 x poddisruptionbudgets
 x podtemplates
-x storageclasses
+
+
+X podsecuritypolicies
+X storageclasses
 - customresourcedefinition
-x networkpolicies
+X networkpolicies
 

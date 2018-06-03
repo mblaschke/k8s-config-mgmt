@@ -6,7 +6,11 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (k *Kubernetes) ListLimitRanges(namespace string) (list map[string]v1.LimitRange, error error) {
+type KubernetesServiceLimitRanges struct {
+	KubernetesBase
+}
+
+func (k *KubernetesServiceLimitRanges) List(namespace string) (list map[string]v1.LimitRange, error error) {
 	list = map[string]v1.LimitRange{}
 
 	options := v12.ListOptions{}
@@ -22,15 +26,15 @@ func (k *Kubernetes) ListLimitRanges(namespace string) (list map[string]v1.Limit
 	return
 }
 
-func (k *Kubernetes) CreateLimitRange(namespace string, limitRange *v1.LimitRange) (ns *v1.LimitRange, error error) {
+func (k *KubernetesServiceLimitRanges) Create(namespace string, limitRange *v1.LimitRange) (ns *v1.LimitRange, error error) {
 	return k.Client().CoreV1().LimitRanges(namespace).Create(limitRange)
 }
 
-func (k *Kubernetes) UpdateLimitRange(namespace string, limitRange *v1.LimitRange) (ns *v1.LimitRange, error error) {
+func (k *KubernetesServiceLimitRanges) Update(namespace string, limitRange *v1.LimitRange) (ns *v1.LimitRange, error error) {
 	return k.Client().CoreV1().LimitRanges(namespace).Update(limitRange)
 }
 
-func (k *Kubernetes) DeleteLimitRange(namespace, name string) (error error) {
+func (k *KubernetesServiceLimitRanges) Delete(namespace, name string) (error error) {
 	options := v12.DeleteOptions{
 		GracePeriodSeconds: &zeroGracePeriod,
 	}
