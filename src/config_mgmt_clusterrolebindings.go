@@ -4,7 +4,11 @@ import (
 	v13 "k8s.io/api/rbac/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageClusterRoleBindings() {
+type K8sConfigManagementClusterClusterRoleBindings struct {
+	K8sConfigManagementBaseCluster
+}
+
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) Manage() {
 	mgmt.Logger.SubCategory("ClusterRoleBindings")
 
 	cluster := mgmt.clusterConfig

@@ -4,8 +4,14 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaceLimitRanges(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceLimitRanges struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) Manage() {
 	mgmt.Logger.SubCategory("LimitRanges")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.LimitRanges.AutoCleanup && len(namespace.LimitRanges) == 0 {

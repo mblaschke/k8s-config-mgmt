@@ -2,10 +2,16 @@ package main
 
 import (
 	v13 "k8s.io/api/rbac/v1"
-	)
+)
 
-func (mgmt *K8sConfigManagement) ManageNamespaceRoleBindings(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceRoleBindings struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) Manage() {
 	mgmt.Logger.SubCategory("RoleBindings")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.RoleBindings.AutoCleanup && len(namespace.RoleBindings) == 0 {

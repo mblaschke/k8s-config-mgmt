@@ -1,11 +1,17 @@
 package main
 
 import (
-		v12 "k8s.io/api/networking/v1"
+	v12 "k8s.io/api/networking/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaceNetworkPolicies(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceNetworkPolicies struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) Manage() {
 	mgmt.Logger.SubCategory("NetworkPolicies")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.NetworkPolicies.AutoCleanup && len(namespace.NetworkPolicies) == 0 {

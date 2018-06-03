@@ -1,10 +1,14 @@
 package main
 
 import (
-		"k8s.io/api/storage/v1"
+	"k8s.io/api/storage/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageStorageClasses() {
+type K8sConfigManagementClusterStorageClasses struct {
+	K8sConfigManagementBaseCluster
+}
+
+func (mgmt *K8sConfigManagementClusterStorageClasses) Manage() {
 	mgmt.Logger.SubCategory("StorageClasses")
 
 	cluster := mgmt.clusterConfig

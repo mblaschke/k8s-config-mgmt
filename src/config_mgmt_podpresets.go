@@ -4,8 +4,14 @@ import (
 		"k8s.io/api/settings/v1alpha1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespacePodPresets(namespace cfgNamespace) {
+type K8sConfigManagementNamespacePodPresets struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) Manage() {
 	mgmt.Logger.SubCategory("PodPresets")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.PodPresets.AutoCleanup && len(namespace.PodPresets) == 0 {

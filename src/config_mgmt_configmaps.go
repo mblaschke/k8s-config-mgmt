@@ -4,8 +4,14 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaceConfigMaps(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceConfigMaps struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) Manage() {
 	mgmt.Logger.SubCategory("ConfigMaps")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.ConfigMaps.AutoCleanup && len(namespace.ConfigMaps) == 0 {

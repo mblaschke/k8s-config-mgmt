@@ -1,12 +1,7 @@
 package main
 
 type K8sConfigManagement struct {
-	Configuration Configuration
-	K8sService Kubernetes
-	Logger *DaemonLogger
-
-	namespaces map[string]cfgNamespace
-	clusterConfig cfgCluster
+	K8sConfigManagementBase
 }
 
 func (mgmt *K8sConfigManagement) Run() {
@@ -28,48 +23,31 @@ func (mgmt *K8sConfigManagement) Init() {
 	}
 }
 
-func (mgmt *K8sConfigManagement) filter(name string, whitelist, blacklist []string) (bool) {
-	return true
-}
-
-func (mgmt *K8sConfigManagement) IsNotDryRun() (run bool) {
-	if !opts.DryRun {
-		run = true
-	} else {
-		mgmt.Logger.StepResult("dry run")
-	}
-	return
-}
-
-func (mgmt *K8sConfigManagement) handleOperationState(err error) {
-	if err == nil {
-		mgmt.Logger.StepResult("ok")
-	} else {
-		mgmt.Logger.StepResult("failed [%v]", err)
-	}
-}
-
 func (mgmt *K8sConfigManagement) ManageConfiguration() {
 	mgmt.Logger.Main("Manage Configuration")
 
 	mgmt.Logger.Category("Cluster configuration")
-	mgmt.ManagePodSecurityPolicies()
-	mgmt.ManageClusterRoles()
-	mgmt.ManageClusterRoleBindings()
-	mgmt.ManageStorageClasses()
-	mgmt.ManageNamespaces()
+	scope := mgmt.ClusterScope()
+	scope.PodSecurityPolicies().Manage()
+	scope.ClusterRoles().Manage()
+	scope.ClusterRoleBinding().Manage()
+	scope.StorageClasses().Manage()
+	scope.Namespaces().Manage()
 
 	for _, namespace := range mgmt.namespaces {
 		mgmt.Logger.Category("Namespace %v", namespace.Name)
 
-		mgmt.ManageNamespaceServiceAccounts(namespace)
-		mgmt.ManageNamespaceConfigMaps(namespace)
-		mgmt.ManageNamespaceRoles(namespace)
-		mgmt.ManageNamespaceRoleBindings(namespace)
-		mgmt.ManageNamespaceResourceQuotas(namespace)
-		mgmt.ManageNamespacePodPresets(namespace)
-		mgmt.ManageNamespacePodDisruptionBudgets(namespace)
-		mgmt.ManageNamespaceLimitRanges(namespace)
-		mgmt.ManageNamespaceNetworkPolicies(namespace)
+		scope := mgmt.NamespaceScope(namespace)
+		scope.ServiceAccounts().Manage()
+		scope.ConfigMaps().Manage()
+		scope.Roles().Manage()
+		scope.RoleBindings().Manage()
+		scope.ResourceQuotas().Manage()
+		scope.PodPresets().Manage()
+		scope.PodDisruptionBudgets().Manage()
+		scope.LimitRanges().Manage()
+		scope.NetworkPolicies().Manage()
 	}
 }
+
+

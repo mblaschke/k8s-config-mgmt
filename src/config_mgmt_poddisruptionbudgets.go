@@ -4,8 +4,14 @@ import (
 	"k8s.io/api/policy/v1beta1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespacePodDisruptionBudgets(namespace cfgNamespace) {
+type K8sConfigManagementNamespacePodDisruptionBudgets struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespacePodDisruptionBudgets) Manage() {
 	mgmt.Logger.SubCategory("PodDisruptionBudgets")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.PodDisruptionBudgets.AutoCleanup && len(namespace.PodDisruptionBudgets) == 0 {

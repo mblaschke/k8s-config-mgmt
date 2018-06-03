@@ -2,9 +2,13 @@ package main
 
 import (
 	v13 "k8s.io/api/rbac/v1"
-	)
+)
 
-func (mgmt *K8sConfigManagement) ManageClusterRoles() {
+type K8sConfigManagementClusterClusterRoles struct {
+	K8sConfigManagementBaseCluster
+}
+
+func (mgmt *K8sConfigManagementClusterClusterRoles) Manage() {
 	mgmt.Logger.SubCategory("ClusterRoles")
 
 	cluster := mgmt.clusterConfig

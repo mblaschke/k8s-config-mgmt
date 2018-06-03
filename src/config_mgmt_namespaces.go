@@ -4,7 +4,11 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaces() {
+type K8sConfigManagementClusterNamespaces struct {
+	K8sConfigManagementBaseCluster
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	mgmt.Logger.Main("Manage Namespaces")
 
 	// check if anything is to do

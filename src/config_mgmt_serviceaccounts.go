@@ -4,8 +4,14 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaceServiceAccounts(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceServiceAccounts struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceServiceAccounts) Manage() {
 	mgmt.Logger.SubCategory("ServiceAccount")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.ServiceAccounts.AutoCleanup && len(namespace.ServiceAccounts) == 0 {

@@ -4,7 +4,11 @@ import (
 	"k8s.io/api/policy/v1beta1"
 )
 
-func (mgmt *K8sConfigManagement) ManagePodSecurityPolicies() {
+type K8sConfigManagementClusterPodSecurityPolicies struct {
+	K8sConfigManagementBaseCluster
+}
+
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) Manage() {
 	mgmt.Logger.SubCategory("PodSecurityPolicies")
 
 	cluster := mgmt.clusterConfig

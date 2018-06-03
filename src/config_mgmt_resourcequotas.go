@@ -4,8 +4,14 @@ import (
 	"k8s.io/api/core/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaceResourceQuotas(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceResourceQuotas struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceResourceQuotas) Manage() {
 	mgmt.Logger.SubCategory("ResourceQuotas")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.ResourceQuotas.AutoCleanup && len(namespace.ResourceQuotas) == 0 {

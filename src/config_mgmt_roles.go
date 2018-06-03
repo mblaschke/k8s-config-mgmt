@@ -4,8 +4,14 @@ import (
 	v13 "k8s.io/api/rbac/v1"
 )
 
-func (mgmt *K8sConfigManagement) ManageNamespaceRoles(namespace cfgNamespace) {
+type K8sConfigManagementNamespaceRoles struct {
+	K8sConfigManagementBaseNamespace
+}
+
+func (mgmt *K8sConfigManagementNamespaceRoles) Manage() {
 	mgmt.Logger.SubCategory("Roles")
+
+	namespace := mgmt.Namespace
 
 	// check if anything is to do
 	if !mgmt.Configuration.Config.Roles.AutoCleanup && len(namespace.Roles) == 0 {
