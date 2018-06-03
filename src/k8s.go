@@ -18,10 +18,14 @@ const K8S_BLACKLIST_SERVICEACCOUNT = "^(default)"
 const K8S_BLACKLIST_CLUSTERROLE = "^(admin|cluster-admin|edit|view|system:.+)$"
 const K8S_BLACKLIST_CLUSTERROLEBINDING = "^(cluster-admin|minikube-rbac|add-on-cluster-admin|kubeadm:.+|storage-.+|system:.+)$"
 
-type Kubernetes struct {
+type KubernetesBase struct {
 	clientset *kubernetes.Clientset
 
 	Logger *DaemonLogger
+}
+
+type Kubernetes struct {
+	KubernetesBase
 
 	KubeContext string
 	KubeConfig string
@@ -29,6 +33,7 @@ type Kubernetes struct {
 	AnnotationSelector string
 	AnnotationSelectorValue string
 }
+
 
 var (
 	k8sBlacklistNamespace = regexp.MustCompile(K8S_BLACKLIST_NAMESPACE)
@@ -87,4 +92,8 @@ func (k *Kubernetes) ParseConfig(path string) (runtime.Object) {
 		log.Fatal(fmt.Sprintf("Error while decoding YAML object. Err was: %s", err))
 	}
 	return obj
+}
+
+func (k *Kubernetes) ClusterRoleBindings() (runtime.Object) {
+
 }
