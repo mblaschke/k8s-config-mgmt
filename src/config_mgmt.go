@@ -11,7 +11,6 @@ type K8sConfigManagement struct {
 
 func (mgmt *K8sConfigManagement) Run() {
 	mgmt.Init()
-	mgmt.ManageNamespaces()
 	mgmt.ManageConfiguration()
 }
 
@@ -56,7 +55,7 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 	mgmt.Logger.Category("Cluster configuration")
 	mgmt.ManageClusterRoles()
 	mgmt.ManageClusterRoleBindings()
-
+	mgmt.ManageNamespaces()
 
 	for _, namespace := range mgmt.namespaces {
 		mgmt.Logger.Category("Namespace %v", namespace.Name)
@@ -65,6 +64,7 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 		mgmt.ManageNamespaceConfigMaps(namespace)
 		mgmt.ManageNamespaceRoles(namespace)
 		mgmt.ManageNamespaceRoleBindings(namespace)
+		mgmt.ManageNamespaceResourceQuotas(namespace)
 		mgmt.ManageNamespaceLimitRanges(namespace)
 	}
 }

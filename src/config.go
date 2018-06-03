@@ -29,6 +29,7 @@ type ConfigurationConfig struct {
 	ServiceAccounts ConfigurationSubItem     `yaml:"serviceaccounts"`
 	Roles ConfigurationSubItem               `yaml:"roles"`
 	RoleBindings ConfigurationSubItem        `yaml:"rolebindings"`
+	ResourceQuotas ConfigurationSubItem      `yaml:"resourcequotas"`
 	LimitRanges ConfigurationSubItem         `yaml:"limitranges"`
 }
 
@@ -59,6 +60,7 @@ type cfgNamespace struct {
 	ServiceAccounts map[string]cfgObject
 	Roles map[string]cfgObject
 	RoleBindings map[string]cfgObject
+	ResourceQuotas map[string]cfgObject
 	LimitRanges map[string]cfgObject
 }
 
@@ -166,6 +168,7 @@ func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () 
 	namespace.ServiceAccounts = map[string]cfgObject{}
 	namespace.Roles = map[string]cfgObject{}
 	namespace.RoleBindings = map[string]cfgObject{}
+	namespace.ResourceQuotas = map[string]cfgObject{}
 	namespace.LimitRanges = map[string]cfgObject{}
 
 	for _, path := range fileList {
@@ -189,6 +192,9 @@ func (c *Configuration) collectConfigurationObjects(namespace *cfgNamespace) () 
 		case "LimitRange":
 			item.Name = item.Object.(*v1.LimitRange).Name
 			namespace.LimitRanges[item.Name] = item
+		case "ResourceQuota":
+			item.Name = item.Object.(*v1.ResourceQuota).Name
+			namespace.ResourceQuotas[item.Name] = item
 		default:
 			panic("Not allowed object found: " + item.Object.GetObjectKind().GroupVersionKind().Kind)
 		}

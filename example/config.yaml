@@ -20,6 +20,9 @@ config:
   rolebindings:
     cleanup: true
 
+  resourcequotas:
+    cleanup: true
+
   limitranges:
     cleanup: true
 

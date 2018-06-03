@@ -5,7 +5,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v13 "k8s.io/api/rbac/v1"
-)
+	)
 
 func (k *Kubernetes) ListClusterRoleBindings() (list map[string]v13.ClusterRoleBinding, error error) {
 	list = map[string]v13.ClusterRoleBinding{}
@@ -14,6 +14,11 @@ func (k *Kubernetes) ListClusterRoleBindings() (list map[string]v13.ClusterRoleB
 
 	if valList, err := k.Client().RbacV1().ClusterRoleBindings().List(options); err == nil {
 		for _, item := range valList.Items {
+			// disable rbac defaults
+			if _, ok := item.Labels["kubernetes.io/bootstrapping"]; ok {
+				continue
+			}
+
 			if !k8sBlacklistClusterRoleBinding.MatchString(item.Name) {
 				list[item.Name] = item
 			}
