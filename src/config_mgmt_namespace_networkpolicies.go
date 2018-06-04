@@ -2,61 +2,49 @@ package main
 
 import (
 	v12 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/api/core/v1"
 )
 
 type K8sConfigManagementNamespaceNetworkPolicies struct {
-	K8sConfigManagementBaseNamespace
+	*K8sConfigManagementBaseNamespace
 }
 
-func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) Manage() {
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) init() {
 	mgmt.Logger.SubCategory("NetworkPolicies")
+}
 
-	namespace := mgmt.Namespace
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) listExistingItems() (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.NetworkPolicies().List(mgmt.Namespace.Name)
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.NetworkPolicies.AutoCleanup && len(namespace.NetworkPolicies) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.NetworkPolicies().List(namespace.Name)
-	if err != nil {
-		panic(err)
-	}
-	
-	for _, item := range namespace.NetworkPolicies {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+	return list, err
+}
 
-			// update
-			item.Object.(*v12.NetworkPolicy).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) listConfigItems() (map[string]cfgObject) {
+	return mgmt.Namespace.NetworkPolicies
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.NetworkPolicies().Update(namespace.Name, &k8sObject)
-				mgmt.handleOperationState(err)
-			}
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1.ConfigMap).DeepCopyInto(k8sItem.(*v1.ConfigMap))
+	return &k8sItem
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.NetworkPolicies().Create(namespace.Name, item.Object.(*v12.NetworkPolicy))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.NetworkPolicies().Create(mgmt.Namespace.Name, k8sItem.(*v12.NetworkPolicy))
+	return err
+}
 
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.NetworkPolicies().Update(mgmt.Namespace.Name, k8sItem.(*v12.NetworkPolicy))
+	return err
+}
 
-	// cleanup
-	if mgmt.Configuration.Config.NetworkPolicies.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := namespace.NetworkPolicies[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.NetworkPolicies().Delete(namespace.Name, k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceNetworkPolicies) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.NetworkPolicies().Delete(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap).Name)
+	return err
 }

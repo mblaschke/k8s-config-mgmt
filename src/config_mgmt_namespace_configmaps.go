@@ -2,62 +2,48 @@ package main
 
 import (
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type K8sConfigManagementNamespaceConfigMaps struct {
-	K8sConfigManagementBaseNamespace
+	*K8sConfigManagementBaseNamespace
 }
 
-func (mgmt *K8sConfigManagementNamespaceConfigMaps) Manage() {
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) init() {
 	mgmt.Logger.SubCategory("ConfigMaps")
+}
 
-	namespace := mgmt.Namespace
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) listExistingItems() (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.ConfigMaps().List(mgmt.Namespace.Name)
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.ConfigMaps.AutoCleanup && len(namespace.ConfigMaps) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.ConfigMaps().List(namespace.Name)
-	if err != nil {
-		panic(err)
-	}
-	
-	for _, item := range namespace.ConfigMaps {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+	return list, err
+}
 
-			// update
-			item.Object.(*v1.ConfigMap).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) listConfigItems() (map[string]cfgObject) {
+	return mgmt.Namespace.ConfigMaps
+}
 
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1.ConfigMap).DeepCopyInto(k8sItem.(*v1.ConfigMap))
+	return &k8sItem
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.ConfigMaps().Update(namespace.Name, &k8sObject)
-				mgmt.handleOperationState(err)
-			}
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.ConfigMaps().Create(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.ConfigMaps().Create(namespace.Name, item.Object.(*v1.ConfigMap))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.ConfigMaps().Update(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap))
+	return err
+}
 
-
-	// cleanup
-	if mgmt.Configuration.Config.ConfigMaps.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := namespace.ConfigMaps[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.ConfigMaps().Delete(namespace.Name, k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceConfigMaps) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.ConfigMaps().Delete(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap).Name)
+	return err
 }

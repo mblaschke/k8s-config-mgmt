@@ -1,62 +1,51 @@
 package main
 
 import (
-		"k8s.io/api/settings/v1alpha1"
+	"k8s.io/api/settings/v1alpha1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/api/core/v1"
 )
 
 type K8sConfigManagementNamespacePodPresets struct {
-	K8sConfigManagementBaseNamespace
+	*K8sConfigManagementBaseNamespace
 }
 
-func (mgmt *K8sConfigManagementNamespacePodPresets) Manage() {
+func (mgmt *K8sConfigManagementNamespacePodPresets) init() {
 	mgmt.Logger.SubCategory("PodPresets")
-
-	namespace := mgmt.Namespace
-
-	// check if anything is to do
-	if !mgmt.Configuration.Config.PodPresets.AutoCleanup && len(namespace.PodPresets) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
-	}
-
-	existingList, err := mgmt.K8sService.PodPresets().List(namespace.Name)
-	if err != nil {
-		panic(err)
-	}
-	
-	for _, item := range namespace.PodPresets {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
-
-			// update
-			item.Object.(*v1alpha1.PodPreset).DeepCopyInto(&k8sObject)
-
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.PodPresets().Update(namespace.Name, &k8sObject)
-				mgmt.handleOperationState(err)
-			}
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
-
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.PodPresets().Create(namespace.Name, item.Object.(*v1alpha1.PodPreset))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
-
-
-	// cleanup
-	if mgmt.Configuration.Config.PodPresets.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := namespace.PodPresets[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.PodPresets().Delete(namespace.Name, k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
 }
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) listExistingItems() (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.PodPresets().List(mgmt.Namespace.Name)
+
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
+	}
+
+	return list, err
+}
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) listConfigItems() (map[string]cfgObject) {
+	return mgmt.Namespace.PodPresets
+}
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1.ConfigMap).DeepCopyInto(k8sItem.(*v1.ConfigMap))
+	return &k8sItem
+}
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.PodPresets().Create(mgmt.Namespace.Name, k8sItem.(*v1alpha1.PodPreset))
+	return err
+}
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.PodPresets().Update(mgmt.Namespace.Name, k8sItem.(*v1alpha1.PodPreset))
+	return err
+}
+
+func (mgmt *K8sConfigManagementNamespacePodPresets) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.PodPresets().Delete(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap).Name)
+	return err
+}
+

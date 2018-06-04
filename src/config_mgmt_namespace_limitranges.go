@@ -2,61 +2,48 @@ package main
 
 import (
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type K8sConfigManagementNamespaceLimitRanges struct {
-	K8sConfigManagementBaseNamespace
+	*K8sConfigManagementBaseNamespace
 }
 
-func (mgmt *K8sConfigManagementNamespaceLimitRanges) Manage() {
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) init() {
 	mgmt.Logger.SubCategory("LimitRanges")
+}
 
-	namespace := mgmt.Namespace
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) listExistingItems() (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.LimitRanges().List(mgmt.Namespace.Name)
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.LimitRanges.AutoCleanup && len(namespace.LimitRanges) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.LimitRanges().List(namespace.Name)
-	if err != nil {
-		panic(err)
-	}
-	
-	for _, item := range namespace.LimitRanges {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+	return list, err
+}
 
-			// update
-			item.Object.(*v1.LimitRange).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) listConfigItems() (map[string]cfgObject) {
+	return mgmt.Namespace.LimitRanges
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.LimitRanges().Update(namespace.Name, &k8sObject)
-				mgmt.handleOperationState(err)
-			}
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1.ConfigMap).DeepCopyInto(k8sItem.(*v1.ConfigMap))
+	return &k8sItem
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.LimitRanges().Create(namespace.Name, item.Object.(*v1.LimitRange))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.LimitRanges().Create(mgmt.Namespace.Name, k8sItem.(*v1.LimitRange))
+	return err
+}
 
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.LimitRanges().Update(mgmt.Namespace.Name, k8sItem.(*v1.LimitRange))
+	return err
+}
 
-	// cleanup
-	if mgmt.Configuration.Config.LimitRanges.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := namespace.LimitRanges[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.LimitRanges().Delete(namespace.Name, k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceLimitRanges) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.LimitRanges().Delete(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap).Name)
+	return err
 }

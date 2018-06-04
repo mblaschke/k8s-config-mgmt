@@ -2,66 +2,49 @@ package main
 
 import (
 	v13 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/api/core/v1"
 )
 
 type K8sConfigManagementNamespaceRoleBindings struct {
-	K8sConfigManagementBaseNamespace
+	*K8sConfigManagementBaseNamespace
 }
 
-func (mgmt *K8sConfigManagementNamespaceRoleBindings) Manage() {
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) init() {
 	mgmt.Logger.SubCategory("RoleBindings")
+}
 
-	namespace := mgmt.Namespace
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) listExistingItems() (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.RoleBindings().List(mgmt.Namespace.Name)
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.RoleBindings.AutoCleanup && len(namespace.RoleBindings) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.RoleBindings().List(namespace.Name)
-	if err != nil {
-		panic(err)
-	}
+	return list, err
+}
 
-	for _, item := range namespace.RoleBindings {
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) listConfigItems() (map[string]cfgObject) {
+	return mgmt.Namespace.RoleBindings
+}
 
-		if item.Object.(*v13.RoleBinding).Namespace == "" {
-			item.Object.(*v13.RoleBinding).Namespace = namespace.Name
-		}
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1.ConfigMap).DeepCopyInto(k8sItem.(*v1.ConfigMap))
+	return &k8sItem
+}
 
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.RoleBindings().Create(mgmt.Namespace.Name, k8sItem.(*v13.RoleBinding))
+	return err
+}
 
-			// update
-			item.Object.(*v13.RoleBinding).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.RoleBindings().Update(mgmt.Namespace.Name, k8sItem.(*v13.RoleBinding))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.RoleBindings().Update(namespace.Name, &k8sObject)
-				mgmt.handleOperationState(err)
-			}
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
-
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.RoleBindings().Create(namespace.Name, item.Object.(*v13.RoleBinding))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
-
-
-	// cleanup
-	if mgmt.Configuration.Config.RoleBindings.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := namespace.RoleBindings[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.RoleBindings().Delete(namespace.Name, k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementNamespaceRoleBindings) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.RoleBindings().Delete(mgmt.Namespace.Name, k8sItem.(*v1.ConfigMap).Name)
+	return err
 }
