@@ -4,8 +4,11 @@ import (
 	"github.com/jessevdk/go-flags"
 	"os"
 	"fmt"
-	"io/ioutil"
-	)
+		"k8s-config-mgmt/src/config"
+	"k8s-config-mgmt/src/configmanagement"
+	"k8s-config-mgmt/src/k8s"
+	"k8s-config-mgmt/src/logger"
+)
 
 const (
 	Author  = "webdevops.io"
@@ -15,9 +18,9 @@ const (
 var (
 	argparser *flags.Parser
 	args []string
-	k8sService = Kubernetes{}
-	Logger *DaemonLogger
-	ErrorLogger *DaemonLogger
+	k8sService = k8s.Kubernetes{}
+	Logger *logger.DaemonLogger
+	ErrorLogger *logger.DaemonLogger
 )
 
 var opts struct {
@@ -31,15 +34,15 @@ var opts struct {
 
 func main() {
 	var err error
-	var Configuration *Configuration
+	var Configuration *config.Configuration
 	argparser = flags.NewParser(&opts, flags.Default)
 	args, err = argparser.Parse()
 
 	initOpts()
 
 	// Init logger
-	Logger = CreateDaemonLogger(0)
-	ErrorLogger = CreateDaemonErrorLogger(0)
+	Logger = logger.CreateDaemonLogger(0)
+	ErrorLogger = logger.CreateDaemonErrorLogger(0)
 
 	// check if there is an parse error
 	if err != nil {
@@ -61,16 +64,11 @@ func main() {
 	Logger.Main("Configuration")
 	Logger.Step("main configuration")
 	if opts.Config != "" {
-		data, err := ioutil.ReadFile(opts.Config)
+		Configuration, err = config.ConfigurationCreateFromFile(opts.Config)
 		if err != nil {
 			panic(err)
 		}
-
-		Configuration, err = ConfigurationCreateFromYaml(string(data))
-		if err != nil {
-			panic(err)
-		}
-		Configuration.k8sService = k8sService
+		Configuration.K8sService = k8sService
 	} else {
 		panic("No config defined")
 	}
@@ -78,10 +76,12 @@ func main() {
 
 
 	Logger.Step("parsing cluster and namespace conf")
-	configMgmt := K8sConfigManagement{}
+	configMgmt := configmanagement.K8sConfigManagement{}
 	configMgmt.Logger = Logger
 	configMgmt.Configuration = *Configuration
 	configMgmt.K8sService = k8sService
+	configMgmt.DryRun = opts.DryRun
+	configMgmt.Validate = opts.Validate
 	configMgmt.Init()
 	Logger.StepResult("done")
 
