@@ -1,11 +1,14 @@
 package main
 
+import (
+	"os"
+	)
+
 type K8sConfigManagement struct {
 	K8sConfigManagementBase
 }
 
 func (mgmt *K8sConfigManagement) Run() {
-	mgmt.Init()
 	mgmt.ManageConfiguration()
 }
 
@@ -33,6 +36,7 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 	scope.ClusterRoleBinding().Manage()
 	scope.StorageClasses().Manage()
 	scope.Namespaces().Manage()
+	os.Exit(1)
 
 	for _, namespace := range mgmt.namespaces {
 		mgmt.Logger.Category("Namespace %v", namespace.Name)

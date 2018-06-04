@@ -2,62 +2,48 @@ package main
 
 import (
 	v13 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type K8sConfigManagementClusterClusterRoleBindings struct {
-	K8sConfigManagementBaseCluster
+	*K8sConfigManagementBaseCluster
 }
 
-func (mgmt *K8sConfigManagementClusterClusterRoleBindings) Manage() {
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) init() {
 	mgmt.Logger.SubCategory("ClusterRoleBindings")
+}
 
-	cluster := mgmt.clusterConfig
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) listExistingItems()  (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.ClusterRoleBindings().List()
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.ClusterRoleBindings.AutoCleanup && len(cluster.ClusterRoleBindings) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.ClusterRoleBindings().List()
-	if err != nil {
-		panic(err)
-	}
+	return list, err
+}
 
-	for _, item := range cluster.ClusterRoleBindings {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) listConfigItems() (map[string]cfgObject) {
+	return mgmt.clusterConfig.ClusterRoleBindings
+}
 
-			// update
-			item.Object.(*v13.ClusterRoleBinding).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v13.ClusterRoleBinding).DeepCopyInto(k8sItem.(*v13.ClusterRoleBinding))
+	return &k8sItem
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.ClusterRoleBindings().Update(&k8sObject)
-				mgmt.handleOperationState(err)
-			}
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.ClusterRoleBindings().Create(k8sItem.(*v13.ClusterRoleBinding))
+	return err
+}
 
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.ClusterRoleBindings().Update(k8sItem.(*v13.ClusterRoleBinding))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.ClusterRoleBindings().Create(item.Object.(*v13.ClusterRoleBinding))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
-
-
-	// cleanup
-	if mgmt.Configuration.Config.ClusterRoleBindings.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := cluster.ClusterRoleBindings[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.ClusterRoleBindings().Delete(k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementClusterClusterRoleBindings) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.ClusterRoleBindings().Delete(k8sItem.(*v13.ClusterRoleBinding).Name)
+	return err
 }

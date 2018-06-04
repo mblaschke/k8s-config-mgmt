@@ -290,7 +290,6 @@ func BuildDefaultPath(configPath string, namespace *cfgNamespace) (string) {
 			path = strings.Replace(path, fmt.Sprintf("{label=%s}", labelName), labelValue, -1)
 		}
 
-		fmt.Println(path)
 		if stat, err := os.Stat(path); err == nil && stat.IsDir() {
 			return path
 		}

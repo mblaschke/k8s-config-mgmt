@@ -25,6 +25,7 @@ var opts struct {
 
 	KubeConfig      string   `           long:"kubeconfig"              env:"KUBECONFIG"              description:"Path to .kube/config"`
 	KubeContext     string   `           long:"kubecontext"             env:"KUBECONTEXT"             description:"Context of .kube/config"`
+	Validate		bool	 `           long:"validate"                env:"VALIDATE"                description:"Validate only mode"`
 	DryRun			bool	 `           long:"dry-run"                 env:"DRYRUN"                  description:"Dryrun"`
 }
 
@@ -57,6 +58,8 @@ func main() {
 	k8sService.Logger = Logger
 
 
+	Logger.Main("Configuration")
+	Logger.Step("main configuration")
 	if opts.Config != "" {
 		data, err := ioutil.ReadFile(opts.Config)
 		if err != nil {
@@ -71,13 +74,24 @@ func main() {
 	} else {
 		panic("No config defined")
 	}
+	Logger.StepResult("done")
 
 
+	Logger.Step("parsing cluster and namespace conf")
 	configMgmt := K8sConfigManagement{}
 	configMgmt.Logger = Logger
 	configMgmt.Configuration = *Configuration
 	configMgmt.K8sService = k8sService
-	configMgmt.Run()
+	configMgmt.Init()
+	Logger.StepResult("done")
+
+	if !opts.Validate {
+		configMgmt.Run()
+	} else {
+		Logger.Step("validation only run, all fine")
+	}
+
+	Logger.Main("finished")
 }
 
 func initOpts() {

@@ -2,62 +2,48 @@ package main
 
 import (
 	"k8s.io/api/storage/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type K8sConfigManagementClusterStorageClasses struct {
-	K8sConfigManagementBaseCluster
+	*K8sConfigManagementBaseCluster
 }
 
-func (mgmt *K8sConfigManagementClusterStorageClasses) Manage() {
+func (mgmt *K8sConfigManagementClusterStorageClasses) init() {
 	mgmt.Logger.SubCategory("StorageClasses")
+}
 
-	cluster := mgmt.clusterConfig
+func (mgmt *K8sConfigManagementClusterStorageClasses) listExistingItems()  (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.StorageClasses().List()
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.StorageClasses.AutoCleanup && len(cluster.StorageClasses) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.StorageClasses().List()
-	if err != nil {
-		panic(err)
-	}
+	return list, err
+}
 
-	for _, item := range cluster.StorageClasses {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterStorageClasses) listConfigItems() (map[string]cfgObject) {
+	return mgmt.clusterConfig.StorageClasses
+}
 
-			// update
-			item.Object.(*v1.StorageClass).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementClusterStorageClasses) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1.StorageClass).DeepCopyInto(k8sItem.(*v1.StorageClass))
+	return &k8sItem
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.StorageClasses().Update(&k8sObject)
-				mgmt.handleOperationState(err)
-			}
+func (mgmt *K8sConfigManagementClusterStorageClasses) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.StorageClasses().Create(k8sItem.(*v1.StorageClass))
+	return err
+}
 
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterStorageClasses) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.StorageClasses().Update(k8sItem.(*v1.StorageClass))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.StorageClasses().Create(item.Object.(*v1.StorageClass))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
-
-
-	// cleanup
-	if mgmt.Configuration.Config.StorageClasses.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := cluster.StorageClasses[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.StorageClasses().Delete(k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementClusterStorageClasses) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.StorageClasses().Delete(k8sItem.(*v1.StorageClass).Name)
+	return err
 }

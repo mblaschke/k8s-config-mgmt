@@ -2,62 +2,48 @@ package main
 
 import (
 	"k8s.io/api/policy/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type K8sConfigManagementClusterPodSecurityPolicies struct {
-	K8sConfigManagementBaseCluster
+	*K8sConfigManagementBaseCluster
 }
 
-func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) Manage() {
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) init() {
 	mgmt.Logger.SubCategory("PodSecurityPolicies")
+}
 
-	cluster := mgmt.clusterConfig
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) listExistingItems()  (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.PodSecurityPolicies().List()
 
-	// check if anything is to do
-	if !mgmt.Configuration.Config.PodSecurityPolicies.AutoCleanup && len(cluster.PodSecurityPolicies) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
 
-	existingList, err := mgmt.K8sService.PodSecurityPolicies().List()
-	if err != nil {
-		panic(err)
-	}
+	return list, err
+}
 
-	for _, item := range cluster.PodSecurityPolicies {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) listConfigItems() (map[string]cfgObject) {
+	return mgmt.clusterConfig.PodSecurityPolicies
+}
 
-			// update
-			item.Object.(*v1beta1.PodSecurityPolicy).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v1beta1.PodSecurityPolicy).DeepCopyInto(k8sItem.(*v1beta1.PodSecurityPolicy))
+	return &k8sItem
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.PodSecurityPolicies().Update(&k8sObject)
-				mgmt.handleOperationState(err)
-			}
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.PodSecurityPolicies().Create(k8sItem.(*v1beta1.PodSecurityPolicy))
+	return err
+}
 
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.PodSecurityPolicies().Update(k8sItem.(*v1beta1.PodSecurityPolicy))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.PodSecurityPolicies().Create(item.Object.(*v1beta1.PodSecurityPolicy))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
-
-
-	// cleanup
-	if mgmt.Configuration.Config.PodSecurityPolicies.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := cluster.PodSecurityPolicies[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.PodSecurityPolicies().Delete(k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementClusterPodSecurityPolicies) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.PodSecurityPolicies().Delete(k8sItem.(*v1beta1.PodSecurityPolicy).Name)
+	return err
 }

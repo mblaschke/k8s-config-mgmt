@@ -9,16 +9,6 @@ type K8sConfigManagementBase struct {
 	clusterConfig cfgCluster
 }
 
-type K8sConfigManagementBaseCluster struct {
-	K8sConfigManagementBase
-}
-
-type K8sConfigManagementBaseNamespace struct {
-	K8sConfigManagementBase
-	Namespace cfgNamespace
-}
-
-
 func (mgmt *K8sConfigManagementBase) filter(name string, whitelist, blacklist []string) (bool) {
 	return true
 }

@@ -2,61 +2,48 @@ package main
 
 import (
 	v13 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type K8sConfigManagementClusterClusterRoles struct {
-	K8sConfigManagementBaseCluster
+	*K8sConfigManagementBaseCluster
 }
 
-func (mgmt *K8sConfigManagementClusterClusterRoles) Manage() {
+func (mgmt *K8sConfigManagementClusterClusterRoles) init() {
 	mgmt.Logger.SubCategory("ClusterRoles")
+}
 
-	cluster := mgmt.clusterConfig
-
-	// check if anything is to do
-	if !mgmt.Configuration.Config.ClusterRoles.AutoCleanup && len(cluster.ClusterRoles) == 0 {
-		mgmt.Logger.Step("skipping")
-		return
+func (mgmt *K8sConfigManagementClusterClusterRoles) listExistingItems()  (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	objList, err := mgmt.K8sService.ClusterRoles().List()
+	
+	for _, item := range objList {
+		list[item.Name] = item.DeepCopyObject()
 	}
+	
+	return list, err
+}
 
-	existingList, err := mgmt.K8sService.ClusterRoles().List()
-	if err != nil {
-		panic(err)
-	}
+func (mgmt *K8sConfigManagementClusterClusterRoles) listConfigItems() (map[string]cfgObject) {
+	return mgmt.clusterConfig.ClusterRoles
+}
 
-	for _, item := range cluster.ClusterRoles {
-		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterClusterRoles) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	configItem.(*v13.ClusterRole).DeepCopyInto(k8sItem.(*v13.ClusterRole))
+	return &k8sItem
+}
 
-			// update
-			item.Object.(*v13.ClusterRole).DeepCopyInto(&k8sObject)
+func (mgmt *K8sConfigManagementClusterClusterRoles) handleCreate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.ClusterRoles().Create(k8sItem.(*v13.ClusterRole))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.ClusterRoles().Update(&k8sObject)
-				mgmt.handleOperationState(err)
-			}
-		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+func (mgmt *K8sConfigManagementClusterClusterRoles) handleUpdate(k8sItem runtime.Object) (error) {
+	_, err := mgmt.K8sService.ClusterRoles().Update(k8sItem.(*v13.ClusterRole))
+	return err
+}
 
-			if mgmt.IsNotDryRun() {
-				_, err := mgmt.K8sService.ClusterRoles().Create(item.Object.(*v13.ClusterRole))
-				mgmt.handleOperationState(err)
-			}
-		}
-	}
-
-
-	// cleanup
-	if mgmt.Configuration.Config.ClusterRoles.AutoCleanup {
-		for _, k8sObject := range existingList {
-			if _, ok := cluster.ClusterRoles[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
-
-				if mgmt.IsNotDryRun() {
-					err := k8sService.ClusterRoles().Delete(k8sObject.Name)
-					mgmt.handleOperationState(err)
-				}
-			}
-		}
-	}
+func (mgmt *K8sConfigManagementClusterClusterRoles) handleDelete(k8sItem runtime.Object) (error) {
+	err := mgmt.K8sService.ClusterRoles().Delete(k8sItem.(*v13.ClusterRole).Name)
+	return err
 }

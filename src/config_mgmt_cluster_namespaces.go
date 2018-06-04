@@ -2,11 +2,43 @@ package main
 
 import (
 	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/pkg/errors"
 )
 
 type K8sConfigManagementClusterNamespaces struct {
-	K8sConfigManagementBaseCluster
+	*K8sConfigManagementBaseCluster
 }
+
+func (mgmt *K8sConfigManagementClusterNamespaces) init() {
+	mgmt.Logger.SubCategory("ClusterRoleBindings")
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) listExistingItems()  (map[string]runtime.Object, error) {
+	list := map[string]runtime.Object{}
+	return list, errors.New("not implemented")
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) listConfigItems() (map[string]cfgObject) {
+	return map[string]cfgObject{}
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) deepCloneObject(configItem, k8sItem runtime.Object) (*runtime.Object) {
+	return nil
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) handleCreate(k8sItem runtime.Object) (error) {
+	return errors.New("not implemented")
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) handleUpdate(k8sItem runtime.Object) (error) {
+	return errors.New("not implemented")
+}
+
+func (mgmt *K8sConfigManagementClusterNamespaces) handleDelete(k8sItem runtime.Object) (error) {
+	return errors.New("not implemented")
+}
+
 
 func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	mgmt.Logger.Main("Manage Namespaces")
