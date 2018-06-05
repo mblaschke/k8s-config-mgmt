@@ -9,25 +9,50 @@ config:
     defaultpath:
     - config/_default/
     - config/{label=team}/_default/
-    cleanup: true
 
-  clusterroles:
-    cleanup: true
+management:
+  cluster:
+    clusterroles:
+      cleanup: true
 
-  clusterrolebindings:
-    cleanup: true
+    clusterrolebindings:
+      cleanup: true
 
-  serviceaccounts:
-    cleanup: true
+    podsecuritypolicies:
+      cleanup: true
 
-  rolebindings:
-    cleanup: true
+    storageclasses:
+      cleanup: true
 
-  resourcequotas:
-    cleanup: true
+    namespace:
+      cleanup: true
 
-  limitranges:
-    cleanup: true
+  namespaces:
+  - name: "*"
+    configmaps:
+      cleanup: true
 
-  configmap:
-    cleanup: true
+    limitranges:
+      cleanup: true
+
+    networkpolicies:
+      cleanup: true
+
+    poddisruptionbudgets:
+      cleanup: true
+
+    podpresets:
+      enabled: false
+      cleanup: true
+
+    resourcequotas:
+      cleanup: true
+
+    rolebindings:
+      cleanup: true
+
+    roles:
+      cleanup: true
+
+    serviceaccounts:
+      cleanup: true

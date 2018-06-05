@@ -18,46 +18,56 @@ import (
 	"io/ioutil"
 )
 
-
 type Configuration struct {
 	Path string
-	Config ConfigurationConfig `yaml:"config"`
+	Config ConfigurationConfig         `yaml:"config"`
+	Management ConfigurationManagement `yaml:"management"`
 	K8sService k8s.Kubernetes
 }
 
 type ConfigurationConfig struct {
-	Cluster ConfigurationCluster                      `yaml:"cluster"`
-	Namespaces ConfigurationNamespace                 `yaml:"namespaces"`
-
-	// cluster scope
-	ClusterRoles ConfigurationSubItem                 `yaml:"clusterroles"`
-	ClusterRoleBindings ConfigurationSubItem          `yaml:"clusterrolebindings"`
-
-	// namespace scope
-	ConfigMaps ConfigurationSubItem                   `yaml:"configmaps"`
-	ServiceAccounts ConfigurationSubItem              `yaml:"serviceaccounts"`
-	Roles ConfigurationSubItem                        `yaml:"roles"`
-	RoleBindings ConfigurationSubItem                 `yaml:"rolebindings"`
-	ResourceQuotas ConfigurationSubItem               `yaml:"resourcequotas"`
-	NetworkPolicies ConfigurationSubItem              `yaml:"networkpolicies"`
-	StorageClasses ConfigurationSubItem               `yaml:"storageclasses"`
-	PodPresets ConfigurationSubItem                   `yaml:"podpresets"`
-	PodSecurityPolicies ConfigurationSubItem          `yaml:"podsecuritypolicies"`
-	PodDisruptionBudgets ConfigurationSubItem         `yaml:"poddisruptionbudgets"`
-	LimitRanges ConfigurationSubItem                  `yaml:"limitranges"`
+	Cluster ConfigurationConfigCluster       `yaml:"cluster"`
+	Namespaces ConfigurationConfigNamespace  `yaml:"namespaces"`
 }
 
-type ConfigurationNamespace struct {
+type ConfigurationManagement struct {
+	Cluster ConfigurationManagementCluster         `yaml:"cluster"`
+	Namespaces []ConfigurationManagementNamespace  `yaml:"namespaces"`
+}
+
+type ConfigurationManagementCluster struct {
+	ClusterRolebindings ConfigurationManagementItem          `yaml:"clusterrolebindings"`
+	ClusterRoles ConfigurationManagementItem                 `yaml:"clusterroles"`
+	Namespaces ConfigurationManagementItem                   `yaml:"namespaces"`
+	PodSecurityPolicies ConfigurationManagementItem          `yaml:"podsecuritypolicies"`
+	StorageClasses ConfigurationManagementItem               `yaml:"storageclasses"`
+}
+
+type ConfigurationManagementNamespace struct {
+	Name string                                              `yaml:"name"`
+	ConfigMaps ConfigurationManagementItem                   `yaml:"configmaps"`
+	LimitRanges ConfigurationManagementItem                  `yaml:"limitranges"`
+	NetworkPolicies ConfigurationManagementItem              `yaml:"networkpolicies"`
+	PodDisruptionBudgets ConfigurationManagementItem         `yaml:"poddisruptionbudgets"`
+	PodPresets ConfigurationManagementItem                   `yaml:"podpresets"`
+	ResourceQuotas ConfigurationManagementItem               `yaml:"resourcequotas"`
+	RoleBindings ConfigurationManagementItem                 `yaml:"rolebindings"`
+	Roles ConfigurationManagementItem                        `yaml:"roles"`
+	ServiceAccounts ConfigurationManagementItem              `yaml:"serviceaccounts"`
+}
+
+type ConfigurationConfigNamespace struct {
 	Path []string                `yaml:"path"`
 	DefaultPath []string         `yaml:"defaultpath"`
 	AutoCleanup bool             `yaml:"cleanup"`
 }
 
-type ConfigurationCluster struct {
+type ConfigurationConfigCluster struct {
 	Path []string                `yaml:"path"`
 }
 
-type ConfigurationSubItem struct {
+type ConfigurationManagementItem struct {
+	Enabled *bool                `yaml:"enabled"`
 	AutoCleanup bool             `yaml:"cleanup"`
 }
 
@@ -101,6 +111,9 @@ func ConfigurationCreateFromFile(path string) (c *Configuration, err error) {
 	}
 
 	err = yaml.Unmarshal([]byte(string(data)), &c)
+	if err != nil {
+		panic(err)
+	}
 
 	c.Path = path
 

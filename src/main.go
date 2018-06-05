@@ -78,7 +78,7 @@ func main() {
 	Logger.Step("parsing cluster and namespace conf")
 	configMgmt := configmanagement.K8sConfigManagement{}
 	configMgmt.Logger = Logger
-	configMgmt.Configuration = *Configuration
+	configMgmt.GlobalConfiguration = *Configuration
 	configMgmt.K8sService = k8sService
 	configMgmt.DryRun = opts.DryRun
 	configMgmt.Validate = opts.Validate

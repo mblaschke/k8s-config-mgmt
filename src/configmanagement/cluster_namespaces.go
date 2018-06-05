@@ -45,7 +45,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	mgmt.Logger.Main("Manage Namespaces")
 
 	// check if anything is to do
-	if !mgmt.Configuration.Config.Namespaces.AutoCleanup && len(mgmt.namespaces) == 0 {
+	if !mgmt.Configuration.AutoCleanup && len(mgmt.namespaces) == 0 {
 		mgmt.Logger.Step("skipping")
 		return
 	}
@@ -82,7 +82,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	}
 
 	// cleanup
-	if mgmt.Configuration.Config.Namespaces.AutoCleanup {
+	if mgmt.Configuration.AutoCleanup {
 		for _, k8sObject := range existingNamespaces {
 			if _, ok := mgmt.namespaces[k8sObject.Name]; !ok {
 				mgmt.Logger.Step("Deleting %v", k8sObject.Name)

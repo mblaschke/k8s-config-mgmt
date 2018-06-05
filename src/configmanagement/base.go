@@ -7,7 +7,8 @@ import (
 )
 
 type K8sConfigManagementBase struct {
-	Configuration config.Configuration
+	GlobalConfiguration config.Configuration
+	Configuration config.ConfigurationManagementItem
 	K8sService k8s.Kubernetes
 	Logger *logger.DaemonLogger
 
@@ -15,10 +16,6 @@ type K8sConfigManagementBase struct {
 	clusterConfig config.ConfigCluster
 	DryRun bool
 	Validate bool
-}
-
-func (mgmt *K8sConfigManagementBase) filter(name string, whitelist, blacklist []string) (bool) {
-	return true
 }
 
 func (mgmt *K8sConfigManagementBase) IsNotDryRun() (run bool) {

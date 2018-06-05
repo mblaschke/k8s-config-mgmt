@@ -25,13 +25,19 @@ type K8sConfigManagementBaseClusterFuncs interface {
 func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 	mgmt.funcs.init()
 
+	configList := mgmt.funcs.listConfigItems()
+
+	// check if anything is to do
+	if !mgmt.Configuration.AutoCleanup && len(configList) == 0 {
+		mgmt.Logger.Step("skipping")
+		return
+	}
+
 	existingList, err := mgmt.funcs.listExistingItems()
 	if err != nil {
 		mgmt.Logger.StepResult(fmt.Sprintf("[ERROR] %v", err))
 		return
 	}
-
-	configList := mgmt.funcs.listConfigItems()
 
 	for _, item := range configList {
 		if k8sObject, ok := existingList[item.Name]; ok {
@@ -54,7 +60,7 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 	}
 
 	// cleanup
-	if mgmt.Configuration.Config.ClusterRoleBindings.AutoCleanup {
+	if mgmt.Configuration.AutoCleanup {
 		for _, k8sObject := range existingList {
 			if _, ok := configList[k8sObject.(v1.Object).GetName()]; !ok {
 				mgmt.Logger.Step("Deleting %v", k8sObject.(v1.Object).GetName())
