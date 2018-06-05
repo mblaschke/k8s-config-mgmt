@@ -4,7 +4,7 @@ import (
 	"github.com/jessevdk/go-flags"
 	"os"
 	"fmt"
-		"k8s-config-mgmt/src/config"
+	"k8s-config-mgmt/src/config"
 	"k8s-config-mgmt/src/configmanagement"
 	"k8s-config-mgmt/src/k8s"
 	"k8s-config-mgmt/src/logger"

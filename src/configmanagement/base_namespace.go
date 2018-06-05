@@ -4,6 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s-config-mgmt/src/config"
+	"fmt"
 )
 
 type K8sConfigManagementBaseNamespace struct {
@@ -27,7 +28,8 @@ func (mgmt *K8sConfigManagementBaseNamespace) Manage() {
 
 	existingList, err := mgmt.funcs.listExistingItems()
 	if err != nil {
-		panic(err)
+		mgmt.Logger.StepResult(fmt.Sprintf("[ERROR] %v", err))
+		return
 	}
 	
 	configList := mgmt.funcs.listConfigItems()
