@@ -17,6 +17,8 @@ config:
       fileexists: config/{label=team}/{namespace}/.foobar
     - name: foocontent
       filecontent: config/{label=team}/{namespace}/.foocontent
+    - name: last-update
+      dateformat: 2006-01-02
     annotations:
     - name: foobar1
       value: barfoo

@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"k8s-config-mgmt/src/k8s"
 	"io/ioutil"
+	"time"
 )
 
 type Configuration struct {
@@ -104,6 +105,7 @@ type ConfigNamespaceLabelAnnotation struct {
 	Value string             `yaml:"value"`
 	FileExists *string       `yaml:"fileexists"`
 	FileContent *string      `yaml:"filecontent"`
+	DateFormat *string       `yaml:"dateformat"`
 }
 
 type ConfigObject struct {
@@ -361,6 +363,9 @@ func (c *Configuration) buildLabelAnnotation(config ConfigNamespaceLabelAnnotati
 			name = config.Name
 			value = strings.TrimSpace(string(bytes))
 		}
+	} else if config.DateFormat != nil {
+		name = config.Name
+		value = time.Now().Format(*config.DateFormat)
 	} else {
 		// static
 		name = config.Name
