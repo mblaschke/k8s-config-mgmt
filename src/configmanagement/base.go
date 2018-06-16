@@ -4,7 +4,9 @@ import (
 	"k8s-config-mgmt/src/config"
 	"k8s-config-mgmt/src/k8s"
 	"k8s-config-mgmt/src/logger"
-)
+	"k8s.io/apimachinery/pkg/runtime"
+		"k8s.io/apimachinery/pkg/apis/meta/v1"
+	)
 
 type K8sConfigManagementBase struct {
 	GlobalConfiguration config.Configuration
@@ -45,4 +47,55 @@ func (mgmt *K8sConfigManagementBase) NamespaceScope(namespace config.ConfigNames
 	return &K8sConfigManagementScopeNamespace{
 		K8sConfigManagementBaseNamespace{ K8sConfigManagementBase: *mgmt, Namespace: namespace},
 	}
+}
+
+func (mgmt *K8sConfigManagementBase) isK8sObjectFiltered(k8sObject runtime.Object) (ret bool) {
+	ret = false
+
+	if ! mgmt.isK8sObjectWhitelisted(k8sObject) {
+		ret = true
+	}
+
+	if mgmt.isK8sObjectBlacklisted(k8sObject) {
+		ret = true
+	}
+
+	return
+}
+
+func (mgmt *K8sConfigManagementBase) isK8sObjectWhitelisted(k8sObject runtime.Object) (ret bool) {
+	ret = false
+
+	// whitelist
+	if mgmt.Configuration.Whitelist != nil {
+		for _, whitelist := range mgmt.Configuration.Whitelist {
+			regexp := filterValueToRegexp(*whitelist)
+			if regexp.MatchString(k8sObject.(v1.Object).GetName()) {
+				ret = true
+				break
+			}
+		}
+	} else {
+		ret = true
+	}
+
+	return
+}
+
+
+func (mgmt *K8sConfigManagementBase) isK8sObjectBlacklisted(k8sObject runtime.Object) (ret bool) {
+	ret = false
+
+	// blacklist
+	if mgmt.Configuration.Blacklist != nil {
+		for _, blacklist := range mgmt.Configuration.Blacklist {
+			regexp := filterValueToRegexp(*blacklist)
+			if regexp.MatchString(k8sObject.(v1.Object).GetName()) {
+				ret = true
+				break
+			}
+		}
+	}
+
+	return
 }

@@ -57,9 +57,11 @@ type ConfigurationManagementNamespace struct {
 }
 
 type ConfigurationConfigNamespace struct {
-	Path []string                `yaml:"path"`
-	DefaultPath []string         `yaml:"defaultpath"`
-	AutoCleanup bool             `yaml:"cleanup"`
+	Path []string                                `yaml:"path"`
+	DefaultPath []string                         `yaml:"defaultpath"`
+	AutoCleanup bool                             `yaml:"cleanup"`
+	Labels []ConfigNamespaceLabelAnnotation      `yaml:"labels"`
+	Annotations []ConfigNamespaceLabelAnnotation `yaml:"annotations"`
 }
 
 type ConfigurationConfigCluster struct {
@@ -69,6 +71,8 @@ type ConfigurationConfigCluster struct {
 type ConfigurationManagementItem struct {
 	Enabled *bool                `yaml:"enabled"`
 	AutoCleanup bool             `yaml:"cleanup"`
+	Whitelist []*string          `yaml:"whitelist"`
+	Blacklist []*string          `yaml:"blacklist"`
 }
 
 type ConfigCluster struct {
@@ -82,6 +86,7 @@ type ConfigNamespace struct {
 	Name string
 	Path string
 	Labels map[string]string
+	Annotations map[string]string
 
 	ConfigMaps map[string]ConfigObject
 	ServiceAccounts map[string]ConfigObject
@@ -92,6 +97,13 @@ type ConfigNamespace struct {
 	PodPresets map[string]ConfigObject
 	PodDisruptionBudgets map[string]ConfigObject
 	LimitRanges map[string]ConfigObject
+}
+
+type ConfigNamespaceLabelAnnotation struct {
+	Name string              `yaml:"name"`
+	Value string             `yaml:"value"`
+	FileExists *string       `yaml:"fileexists"`
+	FileContent *string      `yaml:"filecontent"`
 }
 
 type ConfigObject struct {
@@ -182,6 +194,10 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 		labelMatcher := labelBuildRegexp.ReplaceAllString(labelPath, "(?P<$1>[^/]+)")
 		labelExtractRegexp := regexp.MustCompile(labelMatcher)
 
+		annotationsBuildRegexp := regexp.MustCompile("\\\\{annotation=([^}]+)\\\\}")
+		annotationsMatcher := annotationsBuildRegexp.ReplaceAllString(labelPath, "(?P<$1>[^/]+)")
+		annotationsExtractRegexp := regexp.MustCompile(annotationsMatcher)
+
 		fsEntries, err := filepath.Glob(glob)
 		if err != nil {
 			panic(err.Error())
@@ -199,12 +215,35 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 				namespace.Name = filepath.Base(fsEntry)
 				namespace.Path = fsEntry
 
-				// labels
+				// labels (from path)
 				namespace.Labels = map[string]string{}
 				match := labelExtractRegexp.FindStringSubmatch(fsEntry)
 				for i, name := range labelExtractRegexp.SubexpNames() {
 					if i != 0 && name != "" && match[i] != "" {
 						namespace.Labels[name] = match[i]
+					}
+				}
+
+				// annotations (from path)
+				namespace.Annotations = map[string]string{}
+				match = annotationsExtractRegexp.FindStringSubmatch(fsEntry)
+				for i, name := range annotationsExtractRegexp.SubexpNames() {
+					if i != 0 && name != "" && match[i] != "" {
+						namespace.Annotations[name] = match[i]
+					}
+				}
+
+				// labels (static/from files)
+				for _, labelConf := range c.Config.Namespaces.Labels {
+					if name, value := c.buildLabelAnnotation(labelConf, &namespace); name != "" {
+						namespace.Labels[name] = value
+					}
+				}
+
+				// annotations (static/from files)
+				for _, annotationConf := range c.Config.Namespaces.Annotations {
+					if name, value := c.buildLabelAnnotation(annotationConf, &namespace); name != "" {
+						namespace.Annotations[name] = value
 					}
 				}
 
@@ -221,7 +260,7 @@ func (c *Configuration) BuildNamespaceConfiguration() (namespaceList map[string]
 
 				// default
 				for _, defaultPath := range c.Config.Namespaces.DefaultPath {
-					if defaultPath := c.BuildDefaultPath(defaultPath, &namespace); defaultPath != "" {
+					if defaultPath := c.buildNamespacePath(defaultPath, &namespace); defaultPath != "" && IsDirectory(defaultPath) {
 						c.collectConfigurationObjects(&namespace, defaultPath)
 					}
 				}
@@ -303,17 +342,48 @@ func (c *Configuration) IsNamespaceDefaultPath(configPathList []string, path str
 	return false
 }
 
-func (c *Configuration) BuildDefaultPath(configPath string, namespace *ConfigNamespace) (string) {
-	if configPath != "" {
-		path := ensureAbsConfigPath(c.Path, configPath)
+func (c *Configuration) buildLabelAnnotation(config ConfigNamespaceLabelAnnotation, namespace *ConfigNamespace) (name string, value string) {
+	if config.FileExists != nil {
+		// if file exists
+		if path := c.buildNamespacePath(*config.FileExists, namespace); path != "" && IsRegularFile(path) {
+			name = config.Name
+			value = config.Value
+			return
+		}
+	} else if config.FileContent != nil {
+		// from file content
+		if path := c.buildNamespacePath(*config.FileContent, namespace); path != "" && IsRegularFile(path) {
+			bytes, err := ioutil.ReadFile(path) // just pass the file name
+			if err != nil {
+				panic(err)
+			}
+
+			name = config.Name
+			value = strings.TrimSpace(string(bytes))
+		}
+	} else {
+		// static
+		name = config.Name
+		value = config.Value
+	}
+
+	return
+}
+
+func (c *Configuration) buildNamespacePath(path string, namespace *ConfigNamespace) (string) {
+	if path != "" {
+		path = ensureAbsConfigPath(c.Path, path)
 
 		// replacement markers
 		path = strings.Replace(path, "{namespace}", namespace.Name, -1)
-		for labelName, labelValue := range namespace.Labels {
-			path = strings.Replace(path, fmt.Sprintf("{label=%s}", labelName), labelValue, -1)
+		for name, value := range namespace.Labels {
+			path = strings.Replace(path, fmt.Sprintf("{label=%s}", name), value, -1)
+		}
+		for name, value := range namespace.Annotations {
+			path = strings.Replace(path, fmt.Sprintf("{annotation=%s}", name), value, -1)
 		}
 
-		if stat, err := os.Stat(path); err == nil && stat.IsDir() {
+		if _, err := os.Stat(path); err == nil {
 			return path
 		}
 	}

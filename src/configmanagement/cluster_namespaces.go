@@ -58,9 +58,10 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	// ensure namespace
 	for _, item := range mgmt.namespaces {
 		if k8sObject, ok := existingNamespaces[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v [labels:%v]", item.Name, item.Labels)
+			mgmt.Logger.Step("Updating %v [labels:%v] [annotations:%v]", item.Name, item.Labels, item.Annotations)
 
 			k8sObject.Labels = item.Labels
+			k8sObject.Annotations = item.Annotations
 
 			if mgmt.IsNotDryRun() {
 				_, err := mgmt.K8sService.Namespaces().Update(k8sObject)
@@ -73,6 +74,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 			k8sObject.Name = item.Name
 			k8sObject.Namespace = item.Name
 			k8sObject.Labels = item.Labels
+			k8sObject.Annotations = item.Annotations
 
 			if mgmt.IsNotDryRun() {
 				_, err := mgmt.K8sService.Namespaces().Create(k8sObject)

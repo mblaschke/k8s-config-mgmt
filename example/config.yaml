@@ -9,6 +9,22 @@ config:
     defaultpath:
     - config/_default/
     - config/{label=team}/_default/
+    labels:
+    - name: foobar1
+      value: barfoo
+    - name: foobar2
+      value: barfoo
+      fileexists: config/{label=team}/{namespace}/.foobar
+    - name: foocontent
+      filecontent: config/{label=team}/{namespace}/.foocontent
+    annotations:
+    - name: foobar1
+      value: barfoo
+    - name: foobar2
+      value: barfoo
+      fileexists: config/{label=team}/{namespace}/.foobar
+    - name: foocontent
+      filecontent: config/{label=team}/{namespace}/.foocontent
 
 management:
   cluster:
@@ -28,6 +44,13 @@ management:
       cleanup: true
 
   namespaces:
+  - name: "team1-*"
+    configmaps:
+      cleanup: true
+
+    limitranges:
+      cleanup: true
+
   - name: "*"
     configmaps:
       cleanup: true
@@ -56,3 +79,4 @@ management:
 
     serviceaccounts:
       cleanup: true
+

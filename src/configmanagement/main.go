@@ -1,11 +1,8 @@
 package configmanagement
 
 import (
-	"regexp"
-	"strings"
-	"k8s-config-mgmt/src/config"
-	"fmt"
-)
+			"k8s-config-mgmt/src/config"
+	)
 
 type K8sConfigManagement struct {
 	K8sConfigManagementBase
@@ -68,12 +65,7 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 
 		namespaceConfiguration := config.ConfigurationManagementNamespace{}
 		for _, nsConfig := range mgmt.GlobalConfiguration.Management.Namespaces {
-			namePattern := fmt.Sprintf("^%s$", regexp.QuoteMeta(nsConfig.Name))
-			namePattern = strings.Replace(namePattern, "\\?", ".", -1)
-			namePattern = strings.Replace(namePattern, "\\*", ".+", -1)
-
-			nameRegexp := regexp.MustCompile(namePattern)
-
+			nameRegexp := filterValueToRegexp(nsConfig.Name)
 			if nameRegexp.MatchString(namespace.Name) {
 				namespaceConfiguration = nsConfig
 				break

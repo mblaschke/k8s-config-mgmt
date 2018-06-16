@@ -41,7 +41,7 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 
 	for _, item := range configList {
 		if k8sObject, ok := existingList[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v", item.Name)
+			mgmt.Logger.Step("updating %v", item.Name)
 
 			// update
 			updatedObject := mgmt.funcs.deepCloneObject(item.Object, k8sObject)
@@ -51,7 +51,7 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 			}
 
 		} else {
-			mgmt.Logger.Step("Creating %v", item.Name)
+			mgmt.Logger.Step("creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
 				mgmt.handleOperationState(mgmt.funcs.handleCreate(item.Object))
@@ -63,10 +63,14 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 	if mgmt.Configuration.AutoCleanup {
 		for _, k8sObject := range existingList {
 			if _, ok := configList[k8sObject.(v1.Object).GetName()]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.(v1.Object).GetName())
+				if ! mgmt.isK8sObjectFiltered(k8sObject) {
+					mgmt.Logger.Step("deleting %v", k8sObject.(v1.Object).GetName())
 
-				if mgmt.IsNotDryRun() {
-					mgmt.handleOperationState(mgmt.funcs.handleDelete(k8sObject))
+					if mgmt.IsNotDryRun() {
+						mgmt.handleOperationState(mgmt.funcs.handleDelete(k8sObject))
+					}
+				} else {
+					mgmt.Logger.Step("keep %v (filtered)", k8sObject.(v1.Object).GetName())
 				}
 			}
 		}
