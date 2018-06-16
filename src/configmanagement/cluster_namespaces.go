@@ -58,7 +58,9 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	// ensure namespace
 	for _, item := range mgmt.namespaces {
 		if k8sObject, ok := existingNamespaces[item.Name]; ok {
-			mgmt.Logger.Step("Updating %v [labels:%v] [annotations:%v]", item.Name, item.Labels, item.Annotations)
+			mgmt.Logger.Step("updating %v", item.Name)
+			mgmt.Logger.StepResult("labels: %v", item.Labels)
+			mgmt.Logger.StepResult("annotations: %v", item.Annotations)
 
 			k8sObject.Labels = item.Labels
 			k8sObject.Annotations = item.Annotations
@@ -68,7 +70,9 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 				mgmt.handleOperationState(err)
 			}
 		} else {
-			mgmt.Logger.Step("Create %v [labels:%v]", item.Name, item.Labels)
+			mgmt.Logger.Step("create %v", item.Name)
+			mgmt.Logger.StepResult("labels: %v", item.Labels)
+			mgmt.Logger.StepResult("annotations: %v", item.Annotations)
 
 			k8sObject := &v1.Namespace{}
 			k8sObject.Name = item.Name
@@ -87,7 +91,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 	if mgmt.Configuration.AutoCleanup {
 		for _, k8sObject := range existingNamespaces {
 			if _, ok := mgmt.namespaces[k8sObject.Name]; !ok {
-				mgmt.Logger.Step("Deleting %v", k8sObject.Name)
+				mgmt.Logger.Step("deleting %v", k8sObject.Name)
 
 				if mgmt.IsNotDryRun() {
 					err := mgmt.K8sService.Namespaces().Delete(k8sObject.Name)

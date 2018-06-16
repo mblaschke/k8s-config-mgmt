@@ -34,6 +34,7 @@ func (mgmt *K8sConfigManagementBase) handleOperationState(err error) {
 		mgmt.Logger.StepResult("ok")
 	} else {
 		mgmt.Logger.StepResult("failed [%v]", err)
+		panic(err)
 	}
 }
 

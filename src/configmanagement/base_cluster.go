@@ -40,6 +40,11 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 	}
 
 	for _, item := range configList {
+		if mgmt.isK8sObjectFiltered(item.Object) {
+			mgmt.Logger.Step("ignoring %v (filtered)", item.Name)
+			continue
+		}
+
 		if k8sObject, ok := existingList[item.Name]; ok {
 			mgmt.Logger.Step("updating %v", item.Name)
 
@@ -70,7 +75,7 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 						mgmt.handleOperationState(mgmt.funcs.handleDelete(k8sObject))
 					}
 				} else {
-					mgmt.Logger.Step("keep %v (filtered)", k8sObject.(v1.Object).GetName())
+					mgmt.Logger.Step("ignoring %v (filtered)", k8sObject.(v1.Object).GetName())
 				}
 			}
 		}

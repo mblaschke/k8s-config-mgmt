@@ -59,6 +59,12 @@ management:
 
     limitranges:
       cleanup: true
+      blacklist:
+      - /foobar.+/
+      whitelist:
+      - /mem.+/
+      - mem*
+      - barfoo*
 
     networkpolicies:
       cleanup: true
