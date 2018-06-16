@@ -2,8 +2,7 @@ FROM golang:1.10 as build
 WORKDIR /go/src/k8s-config-mgmt/src
 COPY ./src /go/src/k8s-config-mgmt/src
 RUN curl https://glide.sh/get | sh \
-    && glide install \
-    && mv vendor/* /go/src/
+    && glide install
 RUN mkdir /app/ \
     && cp -a entrypoint.sh /app/ \
     && chmod 555 /app/entrypoint.sh \
