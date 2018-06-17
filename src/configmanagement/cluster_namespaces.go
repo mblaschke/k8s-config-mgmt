@@ -42,7 +42,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) handleDelete(k8sItem runtime.O
 
 
 func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
-	mgmt.Logger.Main("Manage Namespaces")
+	mgmt.Logger.Category("Manage Namespaces")
 
 	// check if anything is to do
 	if !mgmt.Configuration.AutoCleanup && len(mgmt.namespaces) == 0 {
