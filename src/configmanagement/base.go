@@ -5,8 +5,8 @@ import (
 	"k8s-config-mgmt/src/k8s"
 	"k8s-config-mgmt/src/logger"
 	"k8s.io/apimachinery/pkg/runtime"
-		"k8s.io/apimachinery/pkg/apis/meta/v1"
-	)
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 type K8sConfigManagementBase struct {
 	GlobalConfiguration config.Configuration

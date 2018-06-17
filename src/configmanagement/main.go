@@ -1,8 +1,8 @@
 package configmanagement
 
 import (
-			"k8s-config-mgmt/src/config"
-	)
+	"k8s-config-mgmt/src/config"
+)
 
 type K8sConfigManagement struct {
 	K8sConfigManagementBase
@@ -10,6 +10,7 @@ type K8sConfigManagement struct {
 
 func (mgmt *K8sConfigManagement) Run() {
 	mgmt.ManageConfiguration()
+	mgmt.Statistics()
 }
 
 func (mgmt *K8sConfigManagement) Init() {
@@ -24,6 +25,18 @@ func (mgmt *K8sConfigManagement) Init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (mgmt *K8sConfigManagement) Statistics() {
+	mgmt.Logger.Category("Statistics")
+	mgmt.Logger.Step("namespaces")
+	mgmt.Logger.StepResult("created:%v  updated:%v  recreated:%v  deleted:%v", statsNamespaces.created, statsNamespaces.updated, statsNamespaces.recreated, statsNamespaces.deleted)
+
+	mgmt.Logger.Step("cluster objects")
+	mgmt.Logger.StepResult("created:%v  updated:%v  recreated:%v  deleted:%v", statsClusterObjects.created, statsClusterObjects.updated, statsClusterObjects.recreated, statsClusterObjects.deleted)
+
+	mgmt.Logger.Step("namespace objects")
+	mgmt.Logger.StepResult("created:%v  updated:%v  recreated:%v  deleted:%v", statsNamespaceObjects.created, statsNamespaceObjects.updated, statsNamespaceObjects.recreated, statsNamespaceObjects.deleted)
 }
 
 func (mgmt *K8sConfigManagement) ManageConfiguration() {
@@ -116,7 +129,6 @@ func (mgmt *K8sConfigManagement) ManageConfiguration() {
 		if serviceConfig.Enabled == nil || (*serviceConfig.Enabled) == true{
 			scope.NetworkPolicies(serviceConfig).Manage()
 		}
-
 	}
 }
 

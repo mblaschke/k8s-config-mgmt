@@ -69,6 +69,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 				_, err := mgmt.K8sService.Namespaces().Update(k8sObject)
 				mgmt.handleOperationState(err)
 			}
+			statsNamespaces.updated++
 		} else {
 			mgmt.Logger.Step("create %v", item.Name)
 			mgmt.Logger.StepResult("labels: %v", item.Labels)
@@ -84,6 +85,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 				_, err := mgmt.K8sService.Namespaces().Create(k8sObject)
 				mgmt.handleOperationState(err)
 			}
+			statsNamespaces.created++
 		}
 	}
 
@@ -97,6 +99,7 @@ func (mgmt *K8sConfigManagementClusterNamespaces) Manage() {
 					err := mgmt.K8sService.Namespaces().Delete(k8sObject.Name)
 					mgmt.handleOperationState(err)
 				}
+				statsNamespaces.deleted++
 			}
 		}
 	}

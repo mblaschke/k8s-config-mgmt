@@ -59,17 +59,21 @@ func (mgmt *K8sConfigManagementBaseNamespace) Manage() {
 					mgmt.Logger.StepResult("update failed, forcing recreate")
 					mgmt.handleOperationState(mgmt.funcs.handleDelete(*updatedObject))
 					mgmt.handleOperationState(mgmt.funcs.handleCreate(item.Object))
+					statsNamespaceObjects.recreated++
 				} else {
 					mgmt.handleOperationState(err)
+					statsNamespaceObjects.updated++
 				}
+			} else {
+				statsNamespaceObjects.updated++
 			}
-
 		} else {
 			mgmt.Logger.Step("creating %v", item.Name)
 
 			if mgmt.IsNotDryRun() {
 				mgmt.handleOperationState(mgmt.funcs.handleCreate(item.Object))
 			}
+			statsNamespaceObjects.created++
 		}
 	}
 
@@ -83,6 +87,7 @@ func (mgmt *K8sConfigManagementBaseNamespace) Manage() {
 					if mgmt.IsNotDryRun() {
 						mgmt.handleOperationState(mgmt.funcs.handleDelete(k8sObject))
 					}
+					statsNamespaceObjects.deleted++
 				} else {
 					mgmt.Logger.Step("ignoring %v (filtered)", k8sObject.(v1.Object).GetName())
 				}

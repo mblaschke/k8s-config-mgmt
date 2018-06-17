@@ -58,9 +58,13 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 					mgmt.Logger.StepResult("failed, forcing recreate")
 					mgmt.handleOperationState(mgmt.funcs.handleDelete(*updatedObject))
 					mgmt.handleOperationState(mgmt.funcs.handleCreate(item.Object))
+					statsClusterObjects.recreated++
 				} else {
 					mgmt.handleOperationState(err)
+					statsClusterObjects.updated++
 				}
+			} else {
+				statsClusterObjects.updated++
 			}
 
 		} else {
@@ -69,6 +73,7 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 			if mgmt.IsNotDryRun() {
 				mgmt.handleOperationState(mgmt.funcs.handleCreate(item.Object))
 			}
+			statsClusterObjects.created++
 		}
 	}
 
@@ -82,6 +87,7 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 					if mgmt.IsNotDryRun() {
 						mgmt.handleOperationState(mgmt.funcs.handleDelete(k8sObject))
 					}
+					statsClusterObjects.deleted++
 				} else {
 					mgmt.Logger.Step("ignoring %v (filtered)", k8sObject.(v1.Object).GetName())
 				}

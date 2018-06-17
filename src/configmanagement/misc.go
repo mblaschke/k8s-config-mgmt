@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"fmt"
 	"strings"
-	)
+)
 
 var (
 	filterValueAsRegexp = regexp.MustCompile("^\\/.+\\/$")

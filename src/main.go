@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/jessevdk/go-flags"
-	"os"
 	"fmt"
+	"github.com/jessevdk/go-flags"
 	"k8s-config-mgmt/src/config"
 	"k8s-config-mgmt/src/configmanagement"
 	"k8s-config-mgmt/src/k8s"
 	"k8s-config-mgmt/src/logger"
+	"os"
 )
 
 const (
@@ -16,20 +16,19 @@ const (
 )
 
 var (
-	argparser *flags.Parser
-	args []string
-	Logger *logger.DaemonLogger
+	argparser   *flags.Parser
+	args        []string
+	Logger      *logger.DaemonLogger
 	ErrorLogger *logger.DaemonLogger
 )
 
 var opts struct {
-	Config          string   `           long:"config"                  env:"CONFIG"                  description:"Path to config.yaml"`
-
-	KubeConfig      string   `           long:"kubeconfig"              env:"KUBECONFIG"              description:"Path to .kube/config"`
-	KubeContext     string   `           long:"kubecontext"             env:"KUBECONTEXT"             description:"Context of .kube/config"`
-	Validate		bool	 `           long:"validate"                env:"VALIDATE"                description:"Validate only mode"`
-	DryRun			bool	 `           long:"dry-run"                 env:"DRYRUN"                  description:"Dryrun"`
-	Force			bool	 `           long:"force"                   env:"FORCE"                   description:"Force (delete/recreate on error)"`
+	Config      string `required:"true"  long:"config"                  env:"CONFIG"                  description:"Path to config.yaml"`
+	KubeConfig  string `                 long:"kubeconfig"              env:"KUBECONFIG"              description:"Path to .kube/config"`
+	KubeContext string `                 long:"kubecontext"             env:"KUBECONTEXT"             description:"Context of .kube/config"`
+	Validate    bool   `                 long:"validate"                env:"VALIDATE"                description:"Validate only mode"`
+	DryRun      bool   `                 long:"dry-run"                 env:"DRYRUN"                  description:"Dryrun"`
+	Force       bool   `                 long:"force"                   env:"FORCE"                   description:"Force (delete/recreate on error)"`
 }
 
 func main() {
@@ -38,7 +37,6 @@ func main() {
 	// Init logger
 	Logger = logger.CreateDaemonLogger(0)
 	ErrorLogger = logger.CreateDaemonErrorLogger(0)
-
 
 	Logger.Main("Init")
 
@@ -50,7 +48,6 @@ func main() {
 	Configuration := initConfiguration(k8sService)
 	Logger.StepResult("done")
 
-
 	Logger.Step("parsing cluster and namespace conf")
 	configMgmt := initConfigManagement(Configuration, k8sService)
 	Logger.StepResult("done")
@@ -61,7 +58,12 @@ func main() {
 		Logger.Step("validation only run, all fine")
 	}
 
-	Logger.Main("finished")
+	if opts.DryRun {
+		Logger.Main("finished (dry-run)")
+
+	} else {
+		Logger.Main("finished")
+	}
 }
 
 func initArgparser() {
@@ -88,7 +90,7 @@ func initArgparser() {
 	}
 }
 
-func initK8sService() (*k8s.Kubernetes) {
+func initK8sService() *k8s.Kubernetes {
 	service := k8s.Kubernetes{}
 	service.KubeConfig = opts.KubeConfig
 	service.KubeContext = opts.KubeContext
@@ -97,9 +99,9 @@ func initK8sService() (*k8s.Kubernetes) {
 	return &service
 }
 
-func initConfiguration(k8sService *k8s.Kubernetes) (*config.Configuration) {
+func initConfiguration(k8sService *k8s.Kubernetes) *config.Configuration {
 	var (
-		err error
+		err  error
 		conf *config.Configuration
 	)
 
@@ -117,7 +119,7 @@ func initConfiguration(k8sService *k8s.Kubernetes) (*config.Configuration) {
 	return conf
 }
 
-func initConfigManagement(config *config.Configuration, k8sService *k8s.Kubernetes) (*configmanagement.K8sConfigManagement) {
+func initConfigManagement(config *config.Configuration, k8sService *k8s.Kubernetes) *configmanagement.K8sConfigManagement {
 	configMgmt := configmanagement.K8sConfigManagement{}
 	configMgmt.Logger = Logger
 	configMgmt.GlobalConfiguration = *config
