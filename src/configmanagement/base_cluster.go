@@ -52,7 +52,15 @@ func (mgmt *K8sConfigManagementBaseCluster) Manage() {
 			updatedObject := mgmt.funcs.deepCloneObject(item.Object, k8sObject)
 
 			if mgmt.IsNotDryRun() {
-				mgmt.handleOperationState(mgmt.funcs.handleUpdate(*updatedObject))
+				err := mgmt.funcs.handleUpdate(*updatedObject)
+
+				if (mgmt.Force && err != nil) {
+					mgmt.Logger.StepResult("failed, forcing recreate")
+					mgmt.handleOperationState(mgmt.funcs.handleDelete(*updatedObject))
+					mgmt.handleOperationState(mgmt.funcs.handleCreate(item.Object))
+				} else {
+					mgmt.handleOperationState(err)
+				}
 			}
 
 		} else {

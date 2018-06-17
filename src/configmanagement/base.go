@@ -11,13 +11,14 @@ import (
 type K8sConfigManagementBase struct {
 	GlobalConfiguration config.Configuration
 	Configuration config.ConfigurationManagementItem
-	K8sService k8s.Kubernetes
+	K8sService *k8s.Kubernetes
 	Logger *logger.DaemonLogger
 
 	namespaces map[string]config.ConfigNamespace
 	clusterConfig config.ConfigCluster
 	DryRun bool
 	Validate bool
+	Force bool
 }
 
 func (mgmt *K8sConfigManagementBase) IsNotDryRun() (run bool) {
